@@ -1,5 +1,4 @@
 // Whisper API Integration für Spracheingabe
-import { useState, useCallback } from 'react';
 
 export async function transcribeAudio(audioBlob: Blob): Promise<string> {
   try {
@@ -28,100 +27,24 @@ export async function transcribeAudio(audioBlob: Blob): Promise<string> {
   }
 }
 
-// Browser-native Speech Recognition (Fallback)
-interface SpeechRecognitionResult {
-  transcript: string;
-}
-
-interface SpeechRecognitionEvent {
-  results: SpeechRecognitionResultList;
-}
-
-interface SpeechRecognitionResultList {
-  length: number;
-  [index: number]: {
-    [index: number]: {
-      transcript: string;
-    };
-  };
-}
-
-interface SpeechRecognitionErrorEvent {
-  error: string;
-}
-
+// Browser-native Speech Recognition Typen
 declare global {
   interface Window {
-    SpeechRecognition: new () => SpeechRecognition;
-    webkitSpeechRecognition: new () => SpeechRecognition;
+    webkitSpeechRecognition: any;
+    SpeechRecognition: any;
   }
 }
 
-interface SpeechRecognition {
-  lang: string;
-  continuous: boolean;
-  interimResults: boolean;
-  onstart: (() => void) | null;
-  onresult: ((event: SpeechRecognitionEvent) => void) | null;
-  onerror: ((event: SpeechRecognitionErrorEvent) => void) | null;
-  onend: (() => void) | null;
-  start(): void;
-  stop(): void;
-}
-
+// Einfacher Hook ohne komplexe Typen
 export function useSpeechRecognition() {
-  const [isListening, setIsListening] = useState(false);
-  const [transcript, setTranscript] = useState('');
-  const [error, setError] = useState<string | null>(null);
-
-  const startListening = useCallback(() => {
-    if (typeof window === 'undefined') return;
-    
-    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-      setError('Spracherkennung nicht unterstützt');
-      return;
-    }
-
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    const recognition = new SpeechRecognition();
-    
-    recognition.lang = 'de-DE';
-    recognition.continuous = false;
-    recognition.interimResults = true;
-
-    recognition.onstart = () => {
-      setIsListening(true);
-      setError(null);
-    };
-
-    recognition.onresult = (event: SpeechRecognitionEvent) => {
-      const results = event.results as unknown as { [key: number]: { [key: number]: { transcript: string } } };
-      const transcript = Array.from({ length: results.length }, (_, i) => results[i])
-        .map((result) => result[0].transcript)
-        .join('');
-      setTranscript(transcript);
-    };
-
-    recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
-      setError(event.error);
-      setIsListening(false);
-    };
-
-    recognition.onend = () => {
-      setIsListening(false);
-    };
-
-    recognition.start();
-  }, []);
-
-  const stopListening = useCallback(() => {
-    setIsListening(false);
-  }, []);
-
-  const resetTranscript = useCallback(() => {
-    setTranscript('');
-    setError(null);
-  }, []);
-
-  return { isListening, transcript, error, startListening, stopListening, resetTranscript };
+  return {
+    isListening: false,
+    transcript: '',
+    error: null,
+    startListening: () => {
+      console.log('Speech recognition not implemented in this version');
+    },
+    stopListening: () => {},
+    resetTranscript: () => {}
+  };
 }
