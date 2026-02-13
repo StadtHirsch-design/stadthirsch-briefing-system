@@ -170,9 +170,13 @@ export async function POST(request: NextRequest) {
           }),
 
           new Paragraph({
-            text: `Generiert am ${new Date().toLocaleDateString('de-CH')} durch StadtHirsch KI-Briefing-System`,
-            alignment: AlignmentType.CENTER,
-            italics: true
+            children: [
+              new TextRun({
+                text: `Generiert am ${new Date().toLocaleDateString('de-CH')} durch StadtHirsch KI-Briefing-System`,
+                italics: true
+              })
+            ],
+            alignment: AlignmentType.CENTER
           })
         ]
       }]
