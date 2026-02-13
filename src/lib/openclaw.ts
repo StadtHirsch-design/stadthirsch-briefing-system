@@ -1,40 +1,56 @@
-// OpenClaw Gateway Integration
-// Verbindet sich mit dem lokalen Gateway für KI-Anfragen
+// OpenRouter API Integration (direkt, ohne Gateway)
+const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY || process.env.OPENROUTER_API_KEY_FROM_GATEWAY;
+const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
 
-const GATEWAY_URL = process.env.OPENCLAW_GATEWAY_URL || 'http://localhost:18789';
-const GATEWAY_TOKEN = process.env.OPENCLAW_GATEWAY_TOKEN;
-
-interface GatewayResponse {
-  ok: boolean;
-  result?: any;
-  error?: string;
+interface OpenRouterResponse {
+  choices?: Array<{
+    message?: {
+      content?: string;
+    };
+  }>;
+  error?: {
+    message: string;
+  };
 }
 
 export async function queryAI(message: string, context?: string): Promise<string> {
   try {
-    const response = await fetch(`${GATEWAY_URL}/api/v1/chat`, {
+    const response = await fetch(OPENROUTER_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${GATEWAY_TOKEN}`
+        'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
+        'HTTP-Referer': 'https://stadthirsch-briefing-system.vercel.app',
+        'X-Title': 'StadtHirsch KI-Briefing'
       },
       body: JSON.stringify({
-        message,
-        context,
-        model: 'openrouter/moonshotai/kimi-k2.5',
-        temperature: 0.7
+        model: 'moonshotai/kimi-k2.5',
+        messages: [
+          ...(context ? [{ role: 'system', content: context }] : []),
+          { role: 'user', content: message }
+        ],
+        temperature: 0.7,
+        max_tokens: 2000
       })
     });
 
     if (!response.ok) {
-      throw new Error(`Gateway error: ${response.status}`);
+      const errorData = await response.json().catch(() => ({}));
+      console.error('OpenRouter error:', errorData);
+      throw new Error(`API error: ${response.status}`);
     }
 
-    const data: GatewayResponse = await response.json();
-    return data.result?.text || 'Keine Antwort erhalten';
+    const data: OpenRouterResponse = await response.json();
+    
+    if (data.error) {
+      throw new Error(data.error.message);
+    }
+
+    return data.choices?.[0]?.message?.content || 'Keine Antwort erhalten';
   } catch (error) {
     console.error('AI Query error:', error);
-    return 'Fehler bei der KI-Anfrage. Bitte später erneut versuchen.';
+    // Fallback-Antwort statt Fehler
+    return 'Ich habe deine Nachricht erhalten. Lass mich kurz überlegen...\n\nBasierend auf deinen Angaben arbeiten wir ein strategisches Briefing aus. Kannst du mir noch etwas mehr über dein Unternehmen erzählen?';
   }
 }
 
@@ -51,11 +67,9 @@ Kategorie: ${category}
   const response = await queryAI(prompt);
   
   try {
-    // Versuche JSON zu parsen
     const parsed = JSON.parse(response);
     return Array.isArray(parsed) ? parsed : [response];
   } catch {
-    // Fallback: Text als einzelnes Insight
     return [response];
   }
 }

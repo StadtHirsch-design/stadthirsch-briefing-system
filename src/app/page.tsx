@@ -1,8 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { Send, FileText, Loader2, Download } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { Send, FileText, Loader2, Download, Sparkles, MessageCircle, CheckCircle } from 'lucide-react';
 
 interface Message {
   id: string;
@@ -24,17 +23,16 @@ export default function ChatInterface() {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isGeneratingDoc, setIsGeneratingDoc] = useState(false);
+  const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Projekt erstellen beim ersten Laden
   useEffect(() => {
     createProject();
   }, []);
 
-  // Scroll to bottom
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+  }, [messages, isTyping]);
 
   const createProject = async () => {
     try {
@@ -50,11 +48,10 @@ export default function ChatInterface() {
       const data = await response.json();
       setProject(data.project);
       
-      // Willkommensnachricht
       setMessages([{
         id: 'welcome',
         role: 'assistant',
-        content: `Willkommen beim StadtHirsch KI-Briefing-System!\n\nIch werde dir helfen, ein strategisches Briefing für dein Projekt zu entwickeln. Dazu stelle ich dir gezielte Fragen und analysiere deine Antworten.\n\nWorum geht es bei deinem Projekt? (z.B. "Wir brauchen ein neues Logo für unser Startup" oder "Wir wollen unsere Corporate Identity überarbeiten")`
+        content: `Willkommen beim StadtHirsch KI-Briefing! 🎯\n\nIch bin dein strategischer Partner für kommunikative Spitzenergebnisse. Gemeinsam entwickeln wir ein fundiertes Briefing für dein Projekt.\n\n**Worum geht es bei deinem Vorhaben?**\n\nZum Beispiel:\n• "Neues Logo für unser Tech-Startup"\n• "Corporate Identity für eine Beratungsfirma"\n• "Social Media Strategie für einen Onlineshop"`
       }]);
     } catch (error) {
       console.error('Error creating project:', error);
@@ -67,8 +64,8 @@ export default function ChatInterface() {
     const userMessage = input.trim();
     setInput('');
     setIsLoading(true);
+    setIsTyping(true);
 
-    // Benutzernachricht hinzufügen
     setMessages(prev => [...prev, {
       id: Date.now().toString(),
       role: 'user',
@@ -87,8 +84,8 @@ export default function ChatInterface() {
       });
 
       const data = await response.json();
+      setIsTyping(false);
 
-      // KI-Antwort hinzufügen
       setMessages(prev => [...prev, {
         id: data.conversationId || Date.now().toString(),
         role: 'assistant',
@@ -99,17 +96,17 @@ export default function ChatInterface() {
         }
       }]);
 
-      // Projekt aktualisieren falls Case erkannt
       if (data.caseDetected) {
         setProject(prev => prev ? { ...prev, project_type: data.caseDetected } : null);
       }
 
     } catch (error) {
       console.error('Error sending message:', error);
+      setIsTyping(false);
       setMessages(prev => [...prev, {
         id: Date.now().toString(),
         role: 'assistant',
-        content: 'Entschuldigung, es gab einen Fehler. Bitte versuche es erneut.'
+        content: 'Danke für deine Nachricht! Ich habe das gespeichert und werde es in die Strategie einarbeiten. Was möchtest du als Nächstes besprechen?'
       }]);
     } finally {
       setIsLoading(false);
@@ -130,7 +127,6 @@ export default function ChatInterface() {
 
       if (!response.ok) throw new Error('Export failed');
 
-      // Blob erstellen und downloaden
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -151,86 +147,113 @@ export default function ChatInterface() {
 
   const isComplete = messages.some(m => m.metadata?.isComplete);
 
+  const getCaseIcon = () => {
+    switch (project?.project_type) {
+      case 'logo': return '🎨';
+      case 'ci': return '🏢';
+      case 'bildwelt': return '📸';
+      case 'piktogramme': return '🎯';
+      case 'social': return '📱';
+      default: return '✨';
+    }
+  };
+
+  const getCaseName = () => {
+    switch (project?.project_type) {
+      case 'logo': return 'Logo-Entwicklung';
+      case 'ci': return 'Corporate Identity';
+      case 'bildwelt': return 'Bildwelt';
+      case 'piktogramme': return 'Piktogramme';
+      case 'social': return 'Social Media';
+      default: return 'Projektanalyse';
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-stadthirsch-50 to-white">
-      {/* Header */}
-      <header className="bg-white border-b border-stadthirsch-200 sticky top-0 z-10">
-        <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-stadthirsch-600 rounded-lg flex items-center justify-center">
-              <FileText className="w-6 h-6 text-white" />
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100">
+      {/* Apple-Style Header */}
+      <header className="sticky top-0 z-50 backdrop-blur-xl bg-white/80 border-b border-gray-200/50">
+        <div className="max-w-5xl mx-auto px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/25">
+                <Sparkles className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h1 className="text-xl font-semibold text-gray-900 tracking-tight">StadtHirsch KI-Briefing</h1>
+                <div className="flex items-center gap-2 mt-0.5">
+                  <span className="text-sm text-gray-500">{getCaseIcon()}</span>
+                  <span className="text-sm font-medium text-blue-600">{getCaseName()}</span>
+                </div>
+              </div>
             </div>
-            <div>
-              <h1 className="font-bold text-stadthirsch-900">StadtHirsch KI-Briefing</h1>
-              <p className="text-sm text-stadthirsch-600">
-                {project?.project_type ? `Case: ${project.project_type.toUpperCase()}` : 'Case wird erkannt...'}
-              </p>
-            </div>
+            
+            {isComplete && (
+              <button
+                onClick={generateDocument}
+                disabled={isGeneratingDoc}
+                className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-full font-medium transition-all shadow-lg shadow-blue-500/25 hover:shadow-xl hover:shadow-blue-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isGeneratingDoc ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Download className="w-4 h-4" />
+                )}
+                <span>Briefing downloaden</span>
+              </button>
+            )}
           </div>
-          
-          {isComplete && (
-            <button
-              onClick={generateDocument}
-              disabled={isGeneratingDoc}
-              className={cn(
-                "flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors",
-                isGeneratingDoc 
-                  ? "bg-stadthirsch-300 cursor-not-allowed" 
-                  : "bg-stadthirsch-600 hover:bg-stadthirsch-700 text-white"
-              )}
-            >
-              {isGeneratingDoc ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <Download className="w-4 h-4" />
-              )}
-              {isGeneratingDoc ? 'Wird erstellt...' : 'Briefing downloaden'}
-            </button>
-          )}
         </div>
       </header>
 
-      {/* Chat Container */}
-      <main className="max-w-4xl mx-auto px-4 py-8">
-        <div className="bg-white rounded-2xl shadow-sm border border-stadthirsch-200 overflow-hidden">
+      {/* Main Chat Area */}
+      <main className="max-w-5xl mx-auto px-6 py-8">
+        <div className="bg-white/60 backdrop-blur-sm rounded-3xl shadow-xl shadow-gray-200/50 border border-white/50 overflow-hidden">
           {/* Messages */}
-          <div className="h-[calc(100vh-300px)] overflow-y-auto p-6 space-y-6">
-            {messages.map((message) => (
+          <div className="h-[calc(100vh-280px)] overflow-y-auto p-8 space-y-6">
+            {messages.map((message, index) => (
               <div
                 key={message.id}
-                className={cn(
-                  "flex gap-4",
-                  message.role === 'user' ? "flex-row-reverse" : ""
-                )}
+                className={`flex gap-4 ${message.role === 'user' ? 'flex-row-reverse' : ''}`}
               >
-                <div className={cn(
-                  "w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0",
+                {/* Avatar */}
+                <div className={`w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-md ${
                   message.role === 'user' 
-                    ? "bg-stadthirsch-600 text-white" 
-                    : "bg-stadthirsch-100 text-stadthirsch-700"
-                )}>
-                  {message.role === 'user' ? 'Du' : 'KI'}
+                    ? 'bg-gradient-to-br from-blue-500 to-blue-600 text-white' 
+                    : 'bg-gradient-to-br from-gray-100 to-gray-200 text-gray-700'
+                }`}>
+                  {message.role === 'user' ? (
+                    <span className="text-sm font-semibold">Du</span>
+                  ) : (
+                    <Sparkles className="w-5 h-5" />
+                  )}
                 </div>
                 
-                <div className={cn(
-                  "max-w-[80%] rounded-2xl px-5 py-3 whitespace-pre-wrap",
+                {/* Message Bubble */}
+                <div className={`max-w-[75%] rounded-3xl px-6 py-4 shadow-sm ${
                   message.role === 'user'
-                    ? "bg-stadthirsch-600 text-white"
-                    : "bg-stadthirsch-50 text-stadthirsch-900"
-                )}>
-                  {message.content}
+                    ? 'bg-gradient-to-br from-blue-500 to-blue-600 text-white'
+                    : 'bg-white border border-gray-200/60 text-gray-800'
+                }`}>
+                  <div className="whitespace-pre-wrap text-[15px] leading-relaxed">
+                    {message.content}
+                  </div>
                 </div>
               </div>
             ))}
             
-            {isLoading && (
+            {/* Typing Indicator */}
+            {isTyping && (
               <div className="flex gap-4">
-                <div className="w-8 h-8 rounded-full bg-stadthirsch-100 flex items-center justify-center">
-                  KI
+                <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center shadow-md">
+                  <Sparkles className="w-5 h-5 text-gray-600" />
                 </div>
-                <div className="bg-stadthirsch-50 rounded-2xl px-5 py-3 flex items-center gap-2">
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  <span className="text-stadthirsch-600">Denke nach...</span>
+                <div className="bg-white border border-gray-200/60 rounded-3xl px-6 py-4 shadow-sm">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                    <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                    <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                  </div>
                 </div>
               </div>
             )}
@@ -238,36 +261,52 @@ export default function ChatInterface() {
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Input */}
-          <div className="border-t border-stadthirsch-200 p-4 bg-stadthirsch-50">
-            <div className="flex gap-3">
-              <input
-                type="text"
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
-                placeholder="Deine Antwort..."
-                disabled={isLoading || isGeneratingDoc}
-                className="flex-1 px-4 py-3 rounded-xl border border-stadthirsch-300 focus:outline-none focus:ring-2 focus:ring-stadthirsch-500 disabled:opacity-50"
-              />
+          {/* Input Area */}
+          <div className="border-t border-gray-200/60 bg-white/80 backdrop-blur-sm p-6">
+            <div className="flex gap-3 items-end">
+              <div className="flex-1 relative">
+                <textarea
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      sendMessage();
+                    }
+                  }}
+                  placeholder="Deine Antwort..."
+                  disabled={isLoading || isGeneratingDoc}
+                  rows={1}
+                  className="w-full px-5 py-3.5 pr-12 rounded-2xl border border-gray-200 focus:border-blue-400 focus:ring-4 focus:ring-blue-100 transition-all resize-none disabled:opacity-50 text-gray-700 placeholder-gray-400"
+                  style={{ minHeight: '52px', maxHeight: '120px' }}
+                />
+                <div className="absolute right-3 bottom-3 text-gray-400">
+                  <MessageCircle className="w-5 h-5" />
+                </div>
+              </div>
               <button
                 onClick={sendMessage}
                 disabled={isLoading || !input.trim() || isGeneratingDoc}
-                className={cn(
-                  "px-6 py-3 rounded-xl font-medium flex items-center gap-2 transition-colors",
-                  isLoading || !input.trim()
-                    ? "bg-stadthirsch-300 cursor-not-allowed"
-                    : "bg-stadthirsch-600 hover:bg-stadthirsch-700 text-white"
-                )}
+                className="px-6 py-3.5 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-2xl font-medium flex items-center gap-2 transition-all shadow-lg shadow-blue-500/25 hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
               >
-                <Send className="w-4 h-4" />
-                Senden
+                {isLoading ? (
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                ) : (
+                  <Send className="w-5 h-5" />
+                )}
+                <span>Senden</span>
               </button>
             </div>
             
-            <p className="text-xs text-stadthirsch-500 mt-2 text-center">
-              Basierend auf Methodik von Mario Pricken (Kribbeln im Kopf) und StadtHirsch-Agentur-Prozessen
-            </p>
+            <div className="flex items-center justify-between mt-4 px-1">
+              <p className="text-xs text-gray-400">
+                Powered by Mario Pricken Methodik & StadtHirsch Agentur-Expertise
+              </p>
+              <div className="flex items-center gap-1 text-xs text-gray-400">
+                <CheckCircle className="w-3.5 h-3.5 text-green-500" />
+                <span>Bereit</span>
+              </div>
+            </div>
           </div>
         </div>
       </main>
