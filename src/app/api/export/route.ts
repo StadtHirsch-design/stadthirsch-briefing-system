@@ -221,8 +221,8 @@ export async function POST(request: NextRequest) {
       .update({ status: 'completed' })
       .eq('id', projectId);
 
-    // Buffer als Response zurückgeben
-    return new NextResponse(buffer, {
+    // Buffer als Response zurückgeben (als Uint8Array für TypeScript-Kompatibilität)
+    return new NextResponse(new Uint8Array(buffer), {
       headers: {
         'Content-Type': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
         'Content-Disposition': `attachment; filename="${fileName}"`
