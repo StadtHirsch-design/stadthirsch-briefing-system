@@ -79,8 +79,7 @@ Beschreibung: ${caseConfig.description}
 WICHTIGE FRAGEN FÜR DIESEN CASE:
 ${caseConfig.initial_questions.join('\n')}
 
-BERECHEN DIE KOMMUNIKATIONSSTRATEGIE:
-${caseConfig.strategy_questions.join('\n')}
+DOKUMENT-TEMPLATE: ${caseConfig.document_template}
 ` : ''}
 
 REGELN FÜR DAS GESPRÄCH:
