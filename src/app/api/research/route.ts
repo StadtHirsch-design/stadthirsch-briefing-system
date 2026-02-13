@@ -31,7 +31,8 @@ function extractFromHTML(html: string) {
   // Farben extrahieren (aus style-Attributen)
   const colors = new Set<string>();
   const colorMatches = html.matchAll(/#[a-fA-F0-9]{6}/g);
-  for (const match of colorMatches) {
+  const matchesArray = Array.from(colorMatches);
+  for (const match of matchesArray) {
     colors.add(match[0].toLowerCase());
     if (colors.size >= 10) break; // Max 10 Farben
   }
