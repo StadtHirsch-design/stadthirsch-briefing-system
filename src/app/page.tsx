@@ -1,9 +1,9 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { 
-  Send, Loader2, Download, Mic, User, Bot, Plus, Menu, X, 
-  ChevronRight, MessageSquare, Sparkles, History, FileText 
+import {
+  Send, Loader2, Download, Mic, User, Bot, Plus, Menu, X,
+  ChevronRight, MessageSquare, Sparkles, History, FileText
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 
@@ -52,7 +52,7 @@ function useStreamingText(fullText: string, isActive: boolean, speed: number = 3
 
     const interval = setInterval(() => {
       if (indexRef.current < wordsRef.current.length) {
-        setDisplayedText(prev => 
+        setDisplayedText(prev =>
           prev + (prev ? ' ' : '') + wordsRef.current[indexRef.current]
         );
         indexRef.current++;
@@ -71,8 +71,8 @@ function useStreamingText(fullText: string, isActive: boolean, speed: number = 3
 function MessageBubble({ message, isLatest }: { message: Message; isLatest: boolean }) {
   const isUser = message.role === 'user';
   const { displayedText, isComplete } = useStreamingText(
-    message.content, 
-    isLatest && !isUser && message.isStreaming
+    message.content,
+    isLatest && !isUser && !!message.isStreaming
   );
 
   return (
@@ -95,7 +95,7 @@ function MessageBubble({ message, isLatest }: { message: Message; isLatest: bool
             {isUser ? 'Du' : 'StadtHirsch KI'}
           </div>
           <div className="prose prose-invert prose-sm max-w-none">
-            <ReactMarkdown 
+            <ReactMarkdown
               components={{
                 p: ({ children }) => <p className="mb-2 last:mb-0 leading-relaxed">{children}</p>,
                 strong: ({ children }) => <strong className="text-white font-semibold">{children}</strong>,
@@ -172,19 +172,19 @@ export default function ChatInterface() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ customer_name: 'Neues Briefing', project_type: null })
       });
-      
+
       if (!response.ok) throw new Error('Failed to create project');
-      
+
       const data = await response.json();
       setProject(data.project);
-      
+
       setMessages([{
         id: 'welcome',
         role: 'assistant',
         content: `Willkommen beim StadtHirsch KI-Briefing!\n\nIch bin dein strategischer Partner für kommunikative Spitzenergebnisse. Gemeinsam entwickeln wir ein fundiertes Briefing für dein Projekt.\n\n**Worum geht es bei deinem Vorhaben?**\n\nZum Beispiel:\n- Neues Logo für unser Tech-Startup\n- Corporate Identity für eine Beratungsfirma\n- Social Media Strategie für einen Onlineshop`,
         timestamp: new Date()
       }]);
-      
+
       loadProjects();
     } catch (err) {
       console.error('Error creating project:', err);
@@ -258,7 +258,7 @@ export default function ChatInterface() {
 
   const generateDocument = async () => {
     if (!project) return;
-    
+
     try {
       const response = await fetch('/api/export', {
         method: 'POST',
@@ -343,7 +343,7 @@ export default function ChatInterface() {
 
       {/* Mobile Sidebar Overlay */}
       {sidebarOpen && (
-        <div 
+        <div
           className="fixed inset-0 bg-black/50 z-30 md:hidden"
           onClick={() => setSidebarOpen(false)}
         />
@@ -360,7 +360,7 @@ export default function ChatInterface() {
             >
               <Menu className="w-5 h-5" />
             </button>
-            
+
             {caseConfig && (
               <div className="flex items-center gap-2">
                 <span className="text-xl">{caseConfig.icon}</span>
@@ -385,13 +385,13 @@ export default function ChatInterface() {
         {/* Messages */}
         <main className="flex-1 overflow-y-auto">
           {messages.map((message, index) => (
-            <MessageBubble 
-              key={message.id} 
-              message={message} 
+            <MessageBubble
+              key={message.id}
+              message={message}
               isLatest={index === messages.length - 1}
             />
           ))}
-          
+
           {isLoading && (
             <div className="flex gap-4 py-6 bg-slate-900/50">
               <div className="max-w-3xl mx-auto w-full px-4 flex gap-4">
@@ -406,7 +406,7 @@ export default function ChatInterface() {
               </div>
             </div>
           )}
-          
+
           <div ref={messagesEndRef} />
         </main>
 
@@ -424,7 +424,7 @@ export default function ChatInterface() {
                 rows={1}
                 className="flex-1 bg-transparent px-4 py-3.5 resize-none outline-none min-h-[52px] max-h-[200px]"
               />
-              
+
               <div className="flex items-center gap-1 pr-2 pb-2">
                 <button
                   onClick={toggleVoiceInput}
@@ -435,7 +435,7 @@ export default function ChatInterface() {
                 >
                   <Mic className="w-5 h-5" />
                 </button>
-                
+
                 <button
                   onClick={sendMessage}
                   disabled={isLoading || !input.trim()}
@@ -449,7 +449,7 @@ export default function ChatInterface() {
                 </button>
               </div>
             </div>
-            
+
             <p className="text-center text-xs text-slate-500 mt-2">
               KI kann Fehler machen. Wichtige Informationen bitte überprüfen.
             </p>
