@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
 import { queryAI } from '@/lib/openclaw';
 import { detectCase, CASE_CONFIGS } from '@/lib/cases';
-import { CLICKING_STRATEGIES } from '@/lib/pricken';
+import { BriefingCase } from '@/types';
 
 export async function POST(request: NextRequest) {
   try {
@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
     }
 
     // 4. Build conversation context for AI
-    const caseConfig = detectedCase ? CASE_CONFIGS[detectedCase] : null;
+    const caseConfig = detectedCase && detectedCase in CASE_CONFIGS ? CASE_CONFIGS[detectedCase as BriefingCase] : null;
     const conversationCount = conversationHistory?.length || 0;
     
     // Format conversation history for AI context
