@@ -17,6 +17,7 @@
     "@supabase/ssr": "^0.0.10",
     "docx": "^8.5.0",
     "file-saver": "^2.0.5",
+    "openai": "^4.28.0",
     "zod": "^3.22.4",
     "tailwind-merge": "^2.2.0",
     "clsx": "^2.1.0",
