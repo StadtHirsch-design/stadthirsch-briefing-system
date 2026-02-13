@@ -29,12 +29,19 @@ export async function transcribeAudio(audioBlob: Blob): Promise<string> {
 }
 
 // Browser-native Speech Recognition (Fallback)
+interface SpeechRecognitionResult {
+  transcript: string;
+}
+
 interface SpeechRecognitionEvent {
-  results: {
-    [key: number]: {
-      [key: number]: {
-        transcript: string;
-      };
+  results: SpeechRecognitionResultList;
+}
+
+interface SpeechRecognitionResultList {
+  length: number;
+  [index: number]: {
+    [index: number]: {
+      transcript: string;
     };
   };
 }
@@ -88,7 +95,8 @@ export function useSpeechRecognition() {
     };
 
     recognition.onresult = (event: SpeechRecognitionEvent) => {
-      const transcript = Array.from(event.results)
+      const results = event.results as unknown as { [key: number]: { [key: number]: { transcript: string } } };
+      const transcript = Array.from({ length: results.length }, (_, i) => results[i])
         .map((result) => result[0].transcript)
         .join('');
       setTranscript(transcript);
