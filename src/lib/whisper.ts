@@ -1,4 +1,6 @@
 // Whisper API Integration für Spracheingabe
+import { useState, useCallback } from 'react';
+
 export async function transcribeAudio(audioBlob: Blob): Promise<string> {
   try {
     const formData = new FormData();
