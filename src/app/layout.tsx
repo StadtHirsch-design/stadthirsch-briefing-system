@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next'
 import { Inter } from 'next/font/google'
 import './styles/globals.css'
+import './styles/agency.css'
 
 const inter = Inter({ 
   subsets: ['latin'],
@@ -9,8 +10,8 @@ const inter = Inter({
 })
 
 export const metadata: Metadata = {
-  title: 'StadtHirsch KI-Briefing',
-  description: 'Strategische Briefings durch interaktive KI-Konversation',
+  title: 'StadtHirsch KI-Agentur',
+  description: 'Vollautomatisierte KI-gesteuerte Werbe- & Grafikagentur',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',

@@ -1,24 +1,70 @@
 /**
- * STADTHIRSCH v5.0 - CLEAN ARCHITECTURE
- * Entry Point - Minimal & Clear
+ * STADTHIRSCH KI-AGENTUR v6.0
+ * Multi-Agent Dashboard für vollautomatisierte Werbe- & Grafikagentur
+ * 
+ * Agenten: Research → Creative → Production → Delivery
  */
 
 'use client';
 
-import { Sidebar } from './components/Sidebar';
-import { Chat } from './components/Chat';
-import { MobileOverlay } from './components/MobileOverlay';
-import { useSidebar } from './hooks/useSidebar';
-import './styles/globals.css';
+import { useState, useEffect } from 'react';
+import { AgentDashboard } from './components/AgentDashboard';
+import { ProjectWorkspace } from './components/ProjectWorkspace';
+import { LiveChat } from './components/LiveChat';
+import { useAgentSystem } from './hooks/useAgentSystem';
+import './styles/agency.css';
 
-export default function HomePage() {
-  const { isOpen, open, close } = useSidebar();
+export default function AgencyPage() {
+  const [activeView, setActiveView] = useState<'dashboard' | 'project' | 'chat'>('dashboard');
+  const { agents, projects, activeProject, createProject } = useAgentSystem();
 
   return (
-    <div className="app">
-      <Sidebar isOpen={isOpen} onClose={close} />
-      <MobileOverlay isVisible={isOpen} onClick={close} />
-      <Chat onOpenSidebar={open} />
+    <div className="agency">
+      {/* Navigation */}
+      <nav className="agency-nav">
+        <div className="agency-nav__brand">
+          <span className="agency-nav__logo">S</span>
+          <span className="agency-nav__title">StadtHirsch Agentur</span>
+        </div>
+        
+        <div className="agency-nav__tabs">
+          <button 
+            className={`agency-nav__tab ${activeView === 'dashboard' ? 'is-active' : ''}`}
+            onClick={() => setActiveView('dashboard')}
+          >
+            Dashboard
+          </button>
+          <button 
+            className={`agency-nav__tab ${activeView === 'project' ? 'is-active' : ''}`}
+            onClick={() => setActiveView('project')}
+          >
+            Projekt
+          </button>
+          <button 
+            className={`agency-nav__tab ${activeView === 'chat' ? 'is-active' : ''}`}
+            onClick={() => setActiveView('chat')}
+          >
+            Briefing
+          </button>
+        </div>
+
+        <button className="btn btn--accent" onClick={() => createProject()}>
+          + Neues Projekt
+        </button>
+      </nav>
+
+      {/* Main Content */}
+      <main className="agency-main">
+        {activeView === 'dashboard' && (
+          <AgentDashboard agents={agents} projects={projects} />
+        )}
+        {activeView === 'project' && (
+          <ProjectWorkspace project={activeProject} />
+        )}
+        {activeView === 'chat' && (
+          <LiveChat onBriefingComplete={(briefing) => createProject(briefing)} />
+        )}
+      </main>
     </div>
   );
 }
