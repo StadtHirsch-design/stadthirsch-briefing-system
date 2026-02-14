@@ -39,7 +39,6 @@ export function VoiceInput({ onTranscript, disabled }: VoiceInputProps) {
         try {
           const audioBlob = new Blob(chunksRef.current, { type: 'audio/webm' });
           
-          // Sende an API
           const formData = new FormData();
           formData.append('audio', audioBlob);
 
@@ -60,7 +59,6 @@ export function VoiceInput({ onTranscript, disabled }: VoiceInputProps) {
           setIsListening(false);
         }
         
-        // Cleanup
         stream.getTracks().forEach(track => track.stop());
       };
 
@@ -91,11 +89,11 @@ export function VoiceInput({ onTranscript, disabled }: VoiceInputProps) {
       <button
         onClick={toggleRecording}
         disabled={isProcessing}
-        className={`p-3 rounded-full transition-all ${
+        className={`p-2.5 rounded-xl transition-all duration-200 ${
           isListening
-            ? 'bg-red-500 text-white animate-pulse shadow-lg shadow-red-500/30'
-            : 'bg-gradient-to-br from-gray-100 to-gray-200 text-gray-700 hover:from-gray-200 hover:to-gray-300'
-        } disabled:opacity-50`}
+            ? 'bg-apple-red/10 text-apple-red animate-pulse'
+            : 'bg-apple-gray-6 text-[var(--text-secondary)] hover:bg-apple-gray-5'
+        } disabled:opacity-40`}
         title={isListening ? 'Aufnahme stoppen' : 'Spracheingabe'}
       >
         {isProcessing ? (
@@ -108,13 +106,13 @@ export function VoiceInput({ onTranscript, disabled }: VoiceInputProps) {
       </button>
       
       {isListening && (
-        <span className="text-sm text-red-500 font-medium animate-pulse">
+        <span className="text-sm text-apple-red font-medium">
           Höre zu...
         </span>
       )}
       
       {error && (
-        <span className="text-sm text-red-500">
+        <span className="text-sm text-apple-red">
           {error}
         </span>
       )}

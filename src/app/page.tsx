@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 
+// Types
 interface Message {
   id: string;
   role: 'user' | 'assistant';
@@ -25,44 +26,20 @@ interface Project {
   progress?: number;
 }
 
-const CASE_CONFIGS: Record<string, { icon: string; label: string; color: string; bgColor: string }> = {
-  logo: { 
-    icon: '🎨', 
-    label: 'Logo-Entwicklung', 
-    color: 'text-purple-400',
-    bgColor: 'bg-purple-500/10 border-purple-500/20'
-  },
-  ci: { 
-    icon: '🏢', 
-    label: 'Corporate Identity', 
-    color: 'text-blue-400',
-    bgColor: 'bg-blue-500/10 border-blue-500/20'
-  },
-  bildwelt: { 
-    icon: '📸', 
-    label: 'Bildwelt', 
-    color: 'text-green-400',
-    bgColor: 'bg-green-500/10 border-green-500/20'
-  },
-  piktogramme: { 
-    icon: '🎯', 
-    label: 'Piktogramme', 
-    color: 'text-orange-400',
-    bgColor: 'bg-orange-500/10 border-orange-500/20'
-  },
-  social: { 
-    icon: '📱', 
-    label: 'Social Media', 
-    color: 'text-pink-400',
-    bgColor: 'bg-pink-500/10 border-pink-500/20'
-  },
+// Case configurations - reduced colors, minimal style
+const CASE_CONFIGS: Record<string, { icon: string; label: string }> = {
+  logo: { icon: '◆', label: 'Logo' },
+  ci: { icon: '◎', label: 'Corporate Identity' },
+  bildwelt: { icon: '◉', label: 'Bildwelt' },
+  piktogramme: { icon: '▣', label: 'Piktogramme' },
+  social: { icon: '◈', label: 'Social Media' },
 };
 
 const STAGES = [
-  { key: 'briefing', label: 'Briefing', icon: MessageSquare },
-  { key: 'research', label: 'Recherche', icon: Sparkles },
-  { key: 'strategy', label: 'Strategie', icon: CheckCircle2 },
-  { key: 'document', label: 'Dokument', icon: FileText },
+  { key: 'briefing', label: 'Briefing' },
+  { key: 'research', label: 'Recherche' },
+  { key: 'strategy', label: 'Strategie' },
+  { key: 'document', label: 'Dokument' },
 ];
 
 // Streaming hook for word-by-word animation
@@ -102,6 +79,7 @@ function useStreamingText(fullText: string, isActive: boolean, speed: number = 2
   return { displayedText, isComplete };
 }
 
+// Message Bubble Component - Apple Style
 function MessageBubble({ message, isLatest }: { message: Message; isLatest: boolean }) {
   const isUser = message.role === 'user';
   const { displayedText, isComplete } = useStreamingText(
@@ -110,39 +88,44 @@ function MessageBubble({ message, isLatest }: { message: Message; isLatest: bool
   );
 
   return (
-    <div className={`flex gap-4 py-6 ${isUser ? 'bg-slate-800/30' : 'bg-slate-900/30'}`}>
-      <div className="max-w-3xl mx-auto w-full px-4 flex gap-4">
-        {/* Avatar */}
-        <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${
-          isUser ? 'bg-gradient-to-br from-blue-500 to-blue-600' : 'bg-gradient-to-br from-emerald-500 to-teal-500'
+    <div className={`py-6 ${isUser ? 'bg-[var(--bg-secondary)]' : 'bg-[var(--bg-primary)]'}`}>
+      <div className="max-w-content-lg mx-auto px-6 flex gap-4">
+        {/* Avatar - Minimal */}
+        <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
+          isUser 
+            ? 'bg-apple-gray-1 text-white' 
+            : 'bg-apple-blue text-white'
         }`}>
           {isUser ? (
-            <User className="w-5 h-5 text-white" />
+            <User className="w-4 h-4" />
           ) : (
-            <Bot className="w-5 h-5 text-white" />
+            <Bot className="w-4 h-4" />
           )}
         </div>
 
         {/* Content */}
-        <div className="flex-1 min-w-0">
-          <div className="font-semibold text-sm mb-1 text-slate-200">
-            {isUser ? 'Du' : 'StadtHirsch KI'}
+        <div className="flex-1 min-w-0 pt-0.5">
+          <div className="font-semibold text-sm mb-1 text-[var(--text-primary)]">
+            {isUser ? 'Du' : 'StadtHirsch'}
           </div>
-          <div className="prose prose-invert prose-sm max-w-none">
+          <div className="prose prose-sm max-w-none text-[var(--text-primary)]">
             <ReactMarkdown 
               components={{
-                p: ({ children }) => <p className="mb-2 last:mb-0 leading-relaxed text-slate-300">{children}</p>,
-                strong: ({ children }) => <strong className="text-white font-semibold">{children}</strong>,
-                ul: ({ children }) => <ul className="list-disc pl-5 mb-2 space-y-1">{children}</ul>,
-                ol: ({ children }) => <ol className="list-decimal pl-5 mb-2 space-y-1">{children}</ol>,
-                li: ({ children }) => <li className="text-slate-300">{children}</li>,
-                code: ({ children }) => <code className="bg-slate-800 px-1.5 py-0.5 rounded text-sm text-slate-200">{children}</code>,
+                p: ({ children }) => <p className="mb-3 last:mb-0 leading-relaxed">{children}</p>,
+                strong: ({ children }) => <strong className="font-semibold">{children}</strong>,
+                ul: ({ children }) => <ul className="list-disc pl-5 mb-3 space-y-1.5">{children}</ul>,
+                ol: ({ children }) => <ol className="list-decimal pl-5 mb-3 space-y-1.5">{children}</ol>,
+                li: ({ children }) => <li>{children}</li>,
+                code: ({ children }) => <code className="bg-apple-gray-6 px-1.5 py-0.5 rounded text-sm font-mono">{children}</code>,
+                h1: ({ children }) => <h1 className="text-lg font-bold mb-2">{children}</h1>,
+                h2: ({ children }) => <h2 className="text-base font-semibold mb-2">{children}</h2>,
+                h3: ({ children }) => <h3 className="text-sm font-semibold mb-1">{children}</h3>,
               }}
             >
               {isLatest && !isUser && message.isStreaming ? displayedText : message.content}
             </ReactMarkdown>
             {!isComplete && isLatest && !isUser && message.isStreaming && (
-              <span className="inline-block w-2 h-4 bg-emerald-500 ml-1 animate-pulse" />
+              <span className="inline-block w-2 h-4 bg-apple-blue ml-1 animate-pulse" />
             )}
           </div>
         </div>
@@ -151,62 +134,67 @@ function MessageBubble({ message, isLatest }: { message: Message; isLatest: bool
   );
 }
 
-// Progress Bar Component
-function ProgressBar({ currentStage, messageCount }: { currentStage: string; messageCount: number }) {
+// Progress Indicator - Minimal Apple Style
+function ProgressIndicator({ currentStage, messageCount }: { currentStage: string; messageCount: number }) {
   const currentIndex = STAGES.findIndex(s => s.key === currentStage);
   const progress = Math.min(((currentIndex + 1) / STAGES.length) * 100, 100);
   
   return (
-    <div className="bg-slate-900/50 backdrop-blur border-b border-slate-800 px-4 py-3">
-      <div className="max-w-3xl mx-auto">
-        <div className="flex items-center justify-between mb-2">
-          <span className="text-xs text-slate-400">Briefing-Fortschritt</span>
-          <span className="text-xs text-emerald-400">{Math.round(progress)}%</span>
+    <div className="bg-[var(--bg-primary)] border-b border-apple-gray-5 px-6 py-4">
+      <div className="max-w-content-lg mx-auto">
+        <div className="flex items-center justify-between mb-3">
+          <span className="text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wide">
+            Fortschritt
+          </span>
+          <span className="text-xs font-semibold text-apple-blue">{Math.round(progress)}%</span>
         </div>
         
-        {/* Progress Steps */}
-        <div className="flex items-center gap-2">
+        {/* Progress Steps - Minimal */}
+        <div className="flex items-center gap-3">
           {STAGES.map((stage, index) => {
             const isActive = index <= currentIndex;
             const isCurrent = index === currentIndex;
-            const Icon = stage.icon;
             
             return (
               <div key={stage.key} className="flex items-center flex-1">
-                <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                <div className={`flex items-center gap-2 text-xs transition-all ${
                   isCurrent 
-                    ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' 
+                    ? 'text-apple-blue font-semibold' 
                     : isActive 
-                      ? 'bg-slate-800 text-slate-300' 
-                      : 'bg-slate-900 text-slate-500'
+                      ? 'text-[var(--text-primary)]' 
+                      : 'text-[var(--text-tertiary)]'
                 }`}>
-                  <Icon className="w-3.5 h-3.5" />
+                  <div className={`w-2 h-2 rounded-full ${
+                    isCurrent 
+                      ? 'bg-apple-blue' 
+                      : isActive 
+                        ? 'bg-apple-gray-3' 
+                        : 'bg-apple-gray-5'
+                  }`} />
                   <span className="hidden sm:inline">{stage.label}</span>
                 </div>
                 {index < STAGES.length - 1 && (
-                  <ChevronRight className="w-4 h-4 text-slate-600 mx-1" />
+                  <div className={`flex-1 h-px mx-3 ${
+                    index < currentIndex ? 'bg-apple-gray-4' : 'bg-apple-gray-5'
+                  }`} />
                 )}
               </div>
             );
           })}
         </div>
         
-        {/* Progress Bar */}
-        <div className="mt-3 h-1 bg-slate-800 rounded-full overflow-hidden">
+        <div className="mt-3 h-1 bg-apple-gray-5 rounded-full overflow-hidden">
           <div 
-            className="h-full bg-gradient-to-r from-emerald-500 to-teal-400 transition-all duration-500 ease-out"
+            className="h-full bg-apple-blue transition-all duration-500 ease-out"
             style={{ width: `${progress}%` }}
           />
-        </div>
-        
-        <div className="mt-2 text-xs text-slate-500">
-          {messageCount} Nachrichten im Gespräch
         </div>
       </div>
     </div>
   );
 }
 
+// Main Component
 export default function ChatInterface() {
   const [project, setProject] = useState<Project | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -214,19 +202,23 @@ export default function ChatInterface() {
   const [isLoading, setIsLoading] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [projects, setProjects] = useState<Project[]>([]);
+  const [isRecording, setIsRecording] = useState(false);
+  
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
-  const [isRecording, setIsRecording] = useState(false);
 
+  // Initialize
   useEffect(() => {
     loadProjects();
     createNewProject();
   }, []);
 
+  // Scroll to bottom
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
+  // Auto-resize textarea
   useEffect(() => {
     if (inputRef.current) {
       inputRef.current.style.height = 'auto';
@@ -262,7 +254,17 @@ export default function ChatInterface() {
       setMessages([{
         id: 'welcome',
         role: 'assistant',
-        content: `Willkommen beim StadtHirsch KI-Briefing!\n\nIch bin dein strategischer Partner für kommunikative Spitzenergebnisse. Gemeinsam entwickeln wir ein fundiertes Briefing für dein Projekt.\n\n**Worum geht es bei deinem Vorhaben?**\n\nZum Beispiel:\n- Neues Logo für unser Tech-Startup\n- Corporate Identity für eine Beratungsfirma\n- Social Media Strategie für einen Onlineshop`,
+        content: `**Willkommen beim StadtHirsch KI-Briefing**
+
+Ich helfe dir, ein professionelles Briefing für dein Projekt zu entwickeln. Durch gezielte Fragen arbeite ich alle relevanten Aspekte heraus.
+
+**Worum geht es bei deinem Vorhaben?**
+
+*Beispiele:*
+• Neues Logo für ein Tech-Startup
+• Corporate Identity für eine Beratungsfirma  
+• Social Media Strategie für einen Onlineshop
+• Piktogramme für eine Veranstaltung`,
         timestamp: new Date()
       }]);
       
@@ -314,7 +316,6 @@ export default function ChatInterface() {
         setProject(prev => prev ? { ...prev, project_type: data.caseDetected } : null);
       }
 
-      // Update status if document ready
       if (data.isComplete) {
         setProject(prev => prev ? { ...prev, status: 'document' } : null);
       }
@@ -376,20 +377,20 @@ export default function ChatInterface() {
   );
 
   return (
-    <div className="flex h-screen bg-slate-950 text-slate-200 overflow-hidden">
-      {/* Sidebar */}
-      <aside className={`fixed md:relative z-40 w-72 h-full bg-slate-900/95 backdrop-blur-xl border-r border-slate-800 transform transition-transform duration-300 ${
+    <div className="flex h-screen bg-[var(--bg-primary)] text-[var(--text-primary)] overflow-hidden">
+      {/* Sidebar - Minimal Apple Style */}
+      <aside className={`fixed md:relative z-40 w-72 h-full bg-[var(--bg-secondary)] border-r border-apple-gray-5 transform transition-transform duration-300 ease-out ${
         sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
       }`}>
         {/* Header */}
-        <div className="p-4 border-b border-slate-800">
+        <div className="p-5 border-b border-apple-gray-5">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center">
+            <div className="w-9 h-9 rounded-xl bg-apple-blue flex items-center justify-center">
               <Sparkles className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h1 className="font-bold text-white">StadtHirsch</h1>
-              <p className="text-xs text-slate-400">KI-Briefing System</p>
+              <h1 className="font-semibold text-[var(--text-primary)]">StadtHirsch</h1>
+              <p className="text-xs text-[var(--text-secondary)]">KI-Briefing</p>
             </div>
           </div>
         </div>
@@ -398,48 +399,46 @@ export default function ChatInterface() {
         <div className="p-4">
           <button
             onClick={createNewProject}
-            className="w-full flex items-center gap-3 px-4 py-3 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl transition-all group"
+            className="w-full flex items-center gap-3 px-4 py-3 bg-[var(--bg-primary)] hover:bg-apple-gray-6 rounded-xl transition-all duration-200 group border border-apple-gray-5"
           >
-            <div className="w-8 h-8 rounded-lg bg-slate-700 group-hover:bg-slate-600 flex items-center justify-center transition-colors">
-              <Plus className="w-5 h-5" />
+            <div className="w-7 h-7 rounded-lg bg-apple-blue/10 flex items-center justify-center">
+              <Plus className="w-4 h-4 text-apple-blue" />
             </div>
-            <span className="font-medium">Neues Briefing</span>
+            <span className="font-medium text-sm">Neues Briefing</span>
           </button>
         </div>
 
         {/* Project History */}
         <div className="flex-1 overflow-y-auto px-4 pb-4">
-          <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider px-2 py-3">
+          <div className="text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wide px-3 py-3">
             Letzte Briefings
           </div>
-          <div className="space-y-2">
+          <div className="space-y-1">
             {projects.map(p => {
               const pConfig = p.project_type ? CASE_CONFIGS[p.project_type] : null;
               return (
                 <button
                   key={p.id}
                   onClick={() => setProject(p)}
-                  className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl text-left transition-all ${
+                  className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl text-left transition-all duration-200 ${
                     project?.id === p.id 
-                      ? 'bg-slate-800 border border-slate-700' 
-                      : 'hover:bg-slate-800/50'
+                      ? 'bg-[var(--bg-primary)] shadow-card' 
+                      : 'hover:bg-[var(--bg-primary)]/50'
                   }`}
                 >
-                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center text-lg ${
-                    pConfig?.bgColor || 'bg-slate-800'
-                  }`}>
-                    {pConfig?.icon || '💬'}
+                  <div className="w-8 h-8 rounded-lg bg-apple-gray-6 flex items-center justify-center text-lg">
+                    {pConfig?.icon || '◆'}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="font-medium text-sm truncate text-slate-200">
+                    <div className="font-medium text-sm truncate text-[var(--text-primary)]">
                       {p.customer_name}
                     </div>
-                    <div className={`text-xs ${pConfig?.color || 'text-slate-500'}`}>
+                    <div className="text-xs text-[var(--text-secondary)]">
                       {pConfig?.label || 'Allgemein'}
                     </div>
                   </div>
                   {p.status === 'completed' && (
-                    <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+                    <CheckCircle2 className="w-4 h-4 text-apple-green flex-shrink-0" />
                   )}
                 </button>
               );
@@ -448,9 +447,9 @@ export default function ChatInterface() {
         </div>
 
         {/* Footer */}
-        <div className="p-4 border-t border-slate-800">
-          <div className="flex items-center gap-2 text-xs text-slate-500">
-            <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+        <div className="p-4 border-t border-apple-gray-5">
+          <div className="flex items-center gap-2 text-xs text-[var(--text-secondary)]">
+            <div className="w-2 h-2 rounded-full bg-apple-green" />
             <span>System bereit</span>
           </div>
         </div>
@@ -459,30 +458,30 @@ export default function ChatInterface() {
       {/* Mobile Sidebar Overlay */}
       {sidebarOpen && (
         <div 
-          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-30 md:hidden"
+          className="fixed inset-0 bg-black/20 z-30 md:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
 
       {/* Main Chat Area */}
-      <div className="flex-1 flex flex-col h-full bg-slate-950">
-        {/* Top Header */}
-        <header className="flex items-center justify-between px-4 py-3 bg-slate-900/50 backdrop-blur border-b border-slate-800">
+      <div className="flex-1 flex flex-col h-full bg-[var(--bg-primary)]">
+        {/* Top Header - Minimal */}
+        <header className="flex items-center justify-between px-5 py-4 bg-[var(--bg-primary)] border-b border-apple-gray-5">
           <div className="flex items-center gap-3">
             <button
               onClick={() => setSidebarOpen(true)}
-              className="md:hidden p-2 hover:bg-slate-800 rounded-lg transition-colors"
+              className="md:hidden p-2 -ml-2 hover:bg-apple-gray-6 rounded-lg transition-colors"
             >
               <Menu className="w-5 h-5" />
             </button>
             
             {caseConfig ? (
-              <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg ${caseConfig.bgColor} border`}>
-                <span className="text-lg">{caseConfig.icon}</span>
-                <span className={`font-medium text-sm ${caseConfig.color}`}>{caseConfig.label}</span>
+              <div className="flex items-center gap-2 px-3 py-1.5 bg-apple-blue/10 text-apple-blue rounded-full text-sm font-medium">
+                <span>{caseConfig.icon}</span>
+                <span>{caseConfig.label}</span>
               </div>
             ) : (
-              <span className="text-slate-400 text-sm">Wähle einen Projekttyp...</span>
+              <span className="text-[var(--text-secondary)] text-sm">Wähle einen Projekttyp...</span>
             )}
           </div>
 
@@ -490,7 +489,7 @@ export default function ChatInterface() {
             {isComplete && (
               <button
                 onClick={generateDocument}
-                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 rounded-lg text-sm font-medium transition-all shadow-lg shadow-emerald-500/20"
+                className="flex items-center gap-2 px-4 py-2 bg-apple-blue hover:bg-apple-blue-dark text-white rounded-xl text-sm font-medium transition-all duration-200"
               >
                 <FileText className="w-4 h-4" />
                 <span className="hidden sm:inline">Briefing erstellen</span>
@@ -499,8 +498,8 @@ export default function ChatInterface() {
           </div>
         </header>
 
-        {/* Progress Bar */}
-        <ProgressBar 
+        {/* Progress Indicator */}
+        <ProgressIndicator 
           currentStage={project?.status || 'briefing'} 
           messageCount={messages.length}
         />
@@ -509,13 +508,13 @@ export default function ChatInterface() {
         <main className="flex-1 overflow-y-auto">
           {messages.length === 0 ? (
             <div className="flex items-center justify-center h-full">
-              <div className="text-center">
-                <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center">
+              <div className="text-center px-6">
+                <div className="w-16 h-16 mx-auto mb-5 rounded-2xl bg-apple-blue flex items-center justify-center shadow-elevated">
                   <Sparkles className="w-8 h-8 text-white" />
                 </div>
-                <h2 className="text-xl font-bold text-white mb-2">Willkommen!</h2>
-                <p className="text-slate-400 max-w-sm">
-                  Starte ein neues Briefing oder wähle ein bestehendes Projekt aus der Sidebar.
+                <h2 className="text-title-3 text-[var(--text-primary)] mb-2">Willkommen</h2>
+                <p className="text-[var(--text-secondary)] max-w-sm">
+                  Starte ein neues Briefing oder wähle ein bestehendes Projekt aus der Seitenleiste.
                 </p>
               </div>
             </div>
@@ -530,15 +529,15 @@ export default function ChatInterface() {
               ))}
               
               {isLoading && (
-                <div className="flex gap-4 py-6 bg-slate-900/30">
-                  <div className="max-w-3xl mx-auto w-full px-4 flex gap-4">
-                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center">
-                      <Bot className="w-5 h-5 text-white" />
+                <div className="py-6 bg-[var(--bg-primary)]">
+                  <div className="max-w-content-lg mx-auto px-6 flex gap-4">
+                    <div className="w-8 h-8 rounded-full bg-apple-blue flex items-center justify-center flex-shrink-0">
+                      <Bot className="w-4 h-4 text-white" />
                     </div>
-                    <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                      <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                      <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                    <div className="flex items-center gap-1.5 pt-2">
+                      <div className="w-1.5 h-1.5 bg-apple-gray-3 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                      <div className="w-1.5 h-1.5 bg-apple-gray-3 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                      <div className="w-1.5 h-1.5 bg-apple-gray-3 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
                     </div>
                   </div>
                 </div>
@@ -549,28 +548,28 @@ export default function ChatInterface() {
           <div ref={messagesEndRef} />
         </main>
 
-        {/* Input Area */}
-        <footer className="bg-slate-900/50 backdrop-blur border-t border-slate-800 p-4">
-          <div className="max-w-3xl mx-auto">
-            <div className="relative flex items-end gap-2 bg-slate-800/80 rounded-2xl border border-slate-700 focus-within:border-emerald-500/50 focus-within:ring-2 focus-within:ring-emerald-500/20 transition-all">
+        {/* Input Area - Apple Style */}
+        <footer className="bg-[var(--bg-primary)] border-t border-apple-gray-5 p-5">
+          <div className="max-w-content-lg mx-auto">
+            <div className="relative flex items-end gap-2 bg-apple-gray-6 rounded-2xl p-2">
               <textarea
                 ref={inputRef}
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder="Schreibe deine Nachricht..."
+                placeholder="Schreibe eine Nachricht..."
                 disabled={isLoading}
                 rows={1}
-                className="flex-1 bg-transparent px-4 py-4 resize-none outline-none min-h-[56px] max-h-[200px] text-slate-200 placeholder-slate-500"
+                className="flex-1 bg-transparent px-3 py-3 resize-none outline-none min-h-[44px] max-h-[200px] text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)]"
               />
               
-              <div className="flex items-center gap-1 pr-2 pb-2">
+              <div className="flex items-center gap-1 pr-1 pb-1">
                 <button
                   onClick={toggleVoiceInput}
-                  className={`p-2.5 rounded-xl transition-all ${
+                  className={`p-2.5 rounded-xl transition-all duration-200 ${
                     isRecording 
-                      ? 'bg-red-500/20 text-red-400 animate-pulse' 
-                      : 'hover:bg-slate-700 text-slate-400'
+                      ? 'bg-apple-red/10 text-apple-red' 
+                      : 'hover:bg-apple-gray-5 text-[var(--text-secondary)]'
                   }`}
                   title="Spracheingabe"
                 >
@@ -580,7 +579,7 @@ export default function ChatInterface() {
                 <button
                   onClick={sendMessage}
                   disabled={isLoading || !input.trim()}
-                  className="p-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl transition-all shadow-lg shadow-emerald-500/20"
+                  className="p-2.5 bg-apple-blue hover:bg-apple-blue-dark disabled:opacity-40 disabled:cursor-not-allowed text-white rounded-xl transition-all duration-200"
                 >
                   {isLoading ? (
                     <Loader2 className="w-5 h-5 animate-spin" />
@@ -591,9 +590,8 @@ export default function ChatInterface() {
               </div>
             </div>
             
-            <p className="text-center text-xs text-slate-500 mt-3">
-              KI kann Fehler machen. Wichtige Informationen bitte überprüfen. • 
-              <span className="text-slate-400"> Powered by StadtHirsch & Mario Pricken Methodik</span>
+            <p className="text-center text-xs text-[var(--text-tertiary)] mt-3">
+              KI kann Fehler machen. Wichtige Informationen bitte überprüfen.
             </p>
           </div>
         </footer>
