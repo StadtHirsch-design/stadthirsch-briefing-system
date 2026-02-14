@@ -3,102 +3,17 @@
 @tailwind utilities;
 
 :root {
-  /* Apple-Style Design System - Light Mode Default */
-  
-  /* Primary Colors */
-  --color-primary: #007AFF;
-  --color-primary-dark: #0051D5;
-  --color-primary-light: #E3F2FF;
-  
-  /* Grayscale */
-  --apple-gray-50: #F5F5F7;
-  --apple-gray-100: #E8E8ED;
-  --apple-gray-200: #D2D2D7;
-  --apple-gray-300: #86868B;
-  --apple-gray-400: #6E6E73;
-  --apple-gray-500: #1D1D1F;
-  
-  /* Semantic */
-  --apple-blue: #007AFF;
-  --apple-green: #34C759;
-  --apple-orange: #FF9500;
-  --apple-red: #FF3B30;
-  
-  /* Light Mode Backgrounds */
-  --bg-page: #FFFFFF;
-  --bg-sidebar: #F5F5F7;
-  --bg-message-user: #F5F5F7;
-  --bg-message-ai: #FFFFFF;
-  --bg-input: #F5F5F7;
-  --bg-button: #FFFFFF;
-  --bg-button-hover: #E8E8ED;
-  
-  /* Text Colors */
-  --text-primary: #1D1D1F;
-  --text-secondary: #6E6E73;
-  --text-tertiary: #86868B;
-  
-  /* Borders */
-  --border-color: #E8E8ED;
-  --border-color-light: #F5F5F7;
-  
-  /* Shadows */
-  --shadow-sm: 0 1px 2px rgba(0,0,0,0.04), 0 4px 8px rgba(0,0,0,0.02);
-  --shadow-md: 0 2px 4px rgba(0,0,0,0.04), 0 8px 16px rgba(0,0,0,0.02);
-}
-
-/* Base Styles */
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
-
-html {
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  --foreground-rgb: 0, 0, 0;
+  --background-rgb: 249, 250, 251;
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro', 'Inter', 'Segoe UI', sans-serif;
-  color: var(--text-primary);
-  background-color: var(--bg-page);
-  line-height: 1.5;
-  min-height: 100vh;
+  color: rgb(var(--foreground-rgb));
+  background: rgb(var(--background-rgb));
 }
 
-/* Scrollbar */
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-::-webkit-scrollbar-thumb {
-  background: var(--apple-gray-200);
-  border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: var(--apple-gray-300);
-}
-
-/* Selection */
-::selection {
-  background-color: var(--color-primary-light);
-  color: var(--color-primary-dark);
-}
-
-/* Focus */
-*:focus-visible {
-  outline: 2px solid var(--color-primary);
-  outline-offset: 2px;
-}
-
-/* Placeholder */
-::placeholder {
-  color: var(--text-tertiary);
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
 }
