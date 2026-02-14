@@ -1,133 +1,123 @@
 /**
- * COMPONENT: LiveChat
+ * COMPONENT: LiveChat - SIMPLE & CLEAN VERSION
  * Echte KI-Briefing-Konversation mit Gemini API
  */
 
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
-import { Send, Loader2, Mic, Paperclip, RefreshCw } from 'lucide-react';
-import { useConversationMemory } from '../hooks/useConversationMemory';
-import type { ConversationMessage } from '../types/conversation';
+import { useState, useRef, useEffect, useCallback } from 'react';
+import { Send, Loader2, RefreshCw } from 'lucide-react';
+
+interface Message {
+  id: string;
+  role: 'user' | 'agent';
+  content: string;
+}
 
 interface LiveChatProps {
   onBriefingComplete: (briefing: Record<string, any>) => void;
 }
 
 export function LiveChat({ onBriefingComplete }: LiveChatProps) {
-  const { 
-    memory, 
-    addMessage, 
-    getContextForAI, 
-    isBriefingComplete, 
-    resetMemory,
-    getFullBriefing,
-    isInitialized 
-  } = useConversationMemory();
-  
+  const [messages, setMessages] = useState<Message[]>([
+    {
+      id: 'welcome',
+      role: 'agent',
+      content: 'Willkommen bei der StadtHirsch KI-Agentur! 🎯\n\nIch bin Ihr KI-Stratege. Beschreiben Sie kurz Ihr Projekt (Logo, Social Media, Branding...).'
+    }
+  ]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const hasSentWelcome = useRef(false);
 
-  // Send welcome message on first load
+  // Auto-scroll to bottom
   useEffect(() => {
-    if (isInitialized && !hasSentWelcome.current && memory.messages.length === 0) {
-      hasSentWelcome.current = true;
-      const welcomeMsg = `Willkommen bei der StadtHirsch KI-Agentur! 🎯
-
-Ich bin Ihr KI-Stratege. Gemeinsam entwickeln wir ein fundiertes Briefing für Ihr Projekt.
-
-**Was möchten Sie umsetzen?**
-• Logo-Design
-• Social Media Kampagne  
-• Komplette Corporate Identity
-• Video-Produktion
-• Sonstiges
-
-Beschreiben Sie kurz Ihr Vorhaben.`;
-      
-      addMessage('agent', welcomeMsg);
-    }
-  }, [isInitialized, memory.messages.length, addMessage]);
-
-  // Check if briefing is complete
-  useEffect(() => {
-    if (isBriefingComplete() && memory.stage === 'confirmation') {
-      // Briefing complete - trigger agent start
-      setTimeout(() => {
-        onBriefingComplete(getFullBriefing());
-      }, 2000);
-    }
-  }, [memory.stage, isBriefingComplete, getFullBriefing, onBriefingComplete]);
-
-  const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
+  }, [messages, isLoading]);
 
-  useEffect(() => {
-    scrollToBottom();
-  }, [memory.messages, isLoading]);
+  const sendMessage = useCallback(async () => {
+    const trimmedInput = input.trim();
+    if (!trimmedInput || isLoading) return;
 
-  const sendMessage = async () => {
-    if (!input.trim() || isLoading) return;
+    console.log('[LiveChat] Sending message:', trimmedInput);
 
-    const userContent = input.trim();
+    // Add user message
+    const userMsg: Message = {
+      id: Date.now().toString(),
+      role: 'user',
+      content: trimmedInput
+    };
+    
+    setMessages(prev => [...prev, userMsg]);
     setInput('');
     setError(null);
     setIsLoading(true);
 
-    // Add user message to memory
-    addMessage('user', userContent);
-
     try {
-      // Get context for AI
-      const context = getContextForAI();
-      
-      // Prepare messages for API
-      const apiMessages = memory.messages.map((msg: ConversationMessage) => ({
+      // Prepare API request
+      const apiMessages = [...messages, userMsg].map(msg => ({
         role: msg.role,
         content: msg.content
       }));
 
-      // Call API
+      console.log('[LiveChat] Calling API with', apiMessages.length, 'messages');
+
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           messages: apiMessages,
-          briefing: memory.briefing,
-          missingFields: memory.missingFields,
-          confidence: memory.confidence
+          briefing: {},
+          missingFields: [],
+          confidence: 0
         })
       });
 
+      console.log('[LiveChat] Response status:', response.status);
+
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'API-Fehler');
+        const errorText = await response.text();
+        console.error('[LiveChat] API error:', errorText);
+        throw new Error(`HTTP ${response.status}: ${errorText.slice(0, 100)}`);
       }
 
       const data = await response.json();
-      
-      // Add AI response to memory
-      addMessage('agent', data.response);
+      console.log('[LiveChat] API data:', data);
 
-      // Check if briefing is complete according to AI
-      if (data.isBriefingComplete && memory.stage !== 'complete') {
-        addMessage('system', 'Briefing vollständig - Agenten werden gestartet...');
+      if (!data.response) {
+        console.error('[LiveChat] No response in data:', data);
+        throw new Error('Keine Antwort von der KI');
+      }
+
+      // Add AI response
+      const aiMsg: Message = {
+        id: (Date.now() + 1).toString(),
+        role: 'agent',
+        content: data.response
+      };
+      
+      setMessages(prev => [...prev, aiMsg]);
+
+      // Check if briefing complete
+      if (data.isBriefingComplete) {
+        console.log('[LiveChat] Briefing complete!');
+        setTimeout(() => onBriefingComplete({}), 1500);
       }
 
     } catch (err) {
-      console.error('Chat error:', err);
+      console.error('[LiveChat] Error:', err);
       setError((err as Error).message);
       
-      // Add error message
-      addMessage('agent', 'Entschuldigung, es gab einen Fehler. Bitte versuchen Sie es erneut.');
+      setMessages(prev => [...prev, {
+        id: Date.now().toString(),
+        role: 'agent',
+        content: `⚠️ Fehler: ${(err as Error).message}. Bitte versuchen Sie es erneut.`
+      }]);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [input, isLoading, messages, onBriefingComplete]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -137,100 +127,42 @@ Beschreiben Sie kurz Ihr Vorhaben.`;
   };
 
   const handleReset = () => {
-    if (confirm('Möchten Sie das Gespräch wirklich zurücksetzen?')) {
-      resetMemory();
-      hasSentWelcome.current = false;
+    if (confirm('Gespräch zurücksetzen?')) {
+      setMessages([{
+        id: 'welcome',
+        role: 'agent',
+        content: 'Willkommen bei der StadtHirsch KI-Agentur! 🎯\n\nBeschreiben Sie kurz Ihr Projekt.'
+      }]);
+      setError(null);
     }
   };
-
-  // Format message with markdown-like syntax
-  const formatMessage = (content: string) => {
-    return content
-      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-      .replace(/•/g, '&bull;')
-      .replace(/\n/g, '<br/>');
-  };
-
-  if (!isInitialized) {
-    return (
-      <div className="live-chat">
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
-          <Loader2 size={32} className="animate-spin" />
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="live-chat">
       <header className="live-chat__header">
         <div>
           <h1 className="live-chat__title">KI-Briefing</h1>
-          <p className="live-chat__subtitle">
-            {memory.stage === 'initial' && ' Starten Sie ein neues Projekt'}
-            {memory.stage === 'exploring' && '🎯 Projekttyp erkannt - Details erfassen'}
-            {memory.stage === 'deep_dive' && '📝 Fast fertig - noch ein paar Fragen'}
-            {memory.stage === 'confirmation' && '✅ Briefing fast vollständig'}
-            {memory.stage === 'complete' && '🚀 Agenten werden gestartet...'}
-          </p>
+          {error && <p style={{ color: '#ef4444', fontSize: '12px' }}>⚠️ {error}</p>}
         </div>
-        <button 
-          onClick={handleReset}
-          className="btn btn--icon"
-          title="Gespräch zurücksetzen"
-        >
+        <button onClick={handleReset} className="btn btn--icon" title="Zurücksetzen">
           <RefreshCw size={18} />
         </button>
       </header>
 
-      {/* Briefing Progress */}
-      <div style={{ 
-        padding: '12px 20px', 
-        background: 'var(--color-bg-secondary)',
-        borderBottom: '1px solid rgba(255,255,255,0.06)'
-      }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-          <span style={{ fontSize: '12px', color: 'var(--color-text-muted)' }}>Briefing-Vollständigkeit</span>
-          <span style={{ fontSize: '12px', fontWeight: 600, color: memory.confidence > 0.6 ? '#10b981' : 'var(--color-text-muted)' }}>
-            {Math.round(memory.confidence * 100)}%
-          </span>
-        </div>
-        <div style={{ 
-          height: '4px', 
-          background: 'var(--color-bg-tertiary)', 
-          borderRadius: '2px',
-          overflow: 'hidden'
-        }}>
-          <div style={{
-            width: `${memory.confidence * 100}%`,
-            height: '100%',
-            background: memory.confidence > 0.8 ? '#10b981' : memory.confidence > 0.5 ? '#f59e0b' : '#3b82f6',
-            borderRadius: '2px',
-            transition: 'width 0.3s ease'
-          }} />
-        </div>
-        {memory.missingFields.length > 0 && (
-          <div style={{ marginTop: '8px', fontSize: '11px', color: 'var(--color-text-muted)' }}>
-            Noch offen: {memory.missingFields.join(', ')}
-          </div>
-        )}
-      </div>
-
       <div className="chat-container">
         <div className="chat-messages">
-          {memory.messages.map((msg) => (
-            <div 
-              key={msg.id} 
-              className={`chat-message chat-message--${msg.role}`}
-            >
+          {messages.map((msg) => (
+            <div key={msg.id} className={`chat-message chat-message--${msg.role}`}>
               <div className={`chat-message__avatar chat-message__avatar--${msg.role}`}>
-                {msg.role === 'agent' ? 'KI' : msg.role === 'user' ? 'DU' : '✓'}
+                {msg.role === 'agent' ? 'KI' : 'DU'}
               </div>
               <div className="chat-message__content">
                 <div 
                   className={`chat-message__bubble chat-message__bubble--${msg.role}`}
-                  dangerouslySetInnerHTML={{ __html: formatMessage(msg.content) }}
-                />
+                  style={{ whiteSpace: 'pre-wrap' }}
+                >
+                  {msg.content}
+                </div>
               </div>
             </div>
           ))}
@@ -240,8 +172,8 @@ Beschreiben Sie kurz Ihr Vorhaben.`;
               <div className="chat-message__avatar chat-message__avatar--agent">KI</div>
               <div className="chat-message__content">
                 <div className="chat-message__bubble chat-message__bubble--agent" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <Loader2 size={18} className="animate-spin" />
-                  <span style={{ fontSize: '13px', color: 'var(--color-text-muted)' }}>Denke nach...</span>
+                  <Loader2 size={16} className="animate-spin" />
+                  <span style={{ fontSize: '13px', color: 'var(--color-text-muted)' }}>Schreibt...</span>
                 </div>
               </div>
             </div>
@@ -250,43 +182,24 @@ Beschreiben Sie kurz Ihr Vorhaben.`;
           <div ref={messagesEndRef} />
         </div>
 
-        {error && (
-          <div style={{ 
-            padding: '12px 20px', 
-            background: 'rgba(239, 68, 68, 0.1)', 
-            color: '#ef4444',
-            fontSize: '13px',
-            textAlign: 'center'
-          }}>
-            {error}
-          </div>
-        )}
-
         <div className="chat-input">
           <div className="chat-input__container">
-            <button className="btn btn--icon" style={{ padding: '8px' }} disabled={isLoading}>
-              <Paperclip size={20} />
-            </button>
-            
             <textarea
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder={memory.stage === 'complete' ? 'Briefing abgeschlossen...' : 'Beschreiben Sie Ihr Projekt...'}
+              placeholder="Ihre Nachricht..."
               rows={1}
               className="chat-input__field"
-              disabled={isLoading || memory.stage === 'complete'}
+              disabled={isLoading}
+              style={{ minHeight: '44px', maxHeight: '120px' }}
             />
-            
-            <button className="btn btn--icon" style={{ padding: '8px' }} disabled={isLoading}>
-              <Mic size={20} />
-            </button>
             
             <button
               onClick={sendMessage}
-              disabled={isLoading || !input.trim() || memory.stage === 'complete'}
+              disabled={isLoading || !input.trim()}
               className="btn btn--accent"
-              style={{ padding: '10px 16px' }}
+              style={{ padding: '10px 16px', opacity: isLoading || !input.trim() ? 0.5 : 1 }}
             >
               {isLoading ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} />}
             </button>
