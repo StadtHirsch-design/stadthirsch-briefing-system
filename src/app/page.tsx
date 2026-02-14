@@ -1,10 +1,13 @@
+// StadtHirsch UI v4.0 – Modern Redesign
+// Dark Mode Excellence | Linear / Notion / Vercel Inspired
+
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
 import { 
   Send, Loader2, Plus, Menu, Sparkles, MessageSquare, 
-  FileText, Settings, ChevronRight, User, Bot, 
-  Search, MoreHorizontal, X
+  FileText, Search, Settings, ChevronRight, MoreHorizontal,
+  Mic, Image as ImageIcon, Paperclip, X, Command
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 
@@ -19,99 +22,113 @@ interface Message {
 interface Project {
   id: string;
   title: string;
-  type: string;
-  status: 'active' | 'completed' | 'draft';
-  lastMessage: string;
-  timestamp: Date;
+  type: 'logo' | 'ci' | 'social' | 'web' | 'other';
+  updatedAt: Date;
   unread?: number;
 }
 
-// Mock Data
-const MOCK_PROJECTS: Project[] = [
-  {
-    id: '1',
-    title: 'TechStart Logo Redesign',
-    type: 'logo',
-    status: 'active',
-    lastMessage: 'Die Farbpalette sollte moderner wirken...',
-    timestamp: new Date(),
-    unread: 2
+// Modern Color Palette (Direct values - no CSS vars)
+const COLORS = {
+  bg: {
+    base: '#000000',
+    elevated: '#0A0A0A',
+    surface: '#141414',
+    hover: '#1A1A1A',
+    active: '#222222'
   },
-  {
-    id: '2',
-    title: 'Corporate Identity Beratung GmbH',
-    type: 'ci',
-    status: 'active',
-    lastMessage: 'Wir benötigen ein konsistentes Erscheinungsbild...',
-    timestamp: new Date(Date.now() - 86400000),
+  border: {
+    subtle: 'rgba(255,255,255,0.06)',
+    default: 'rgba(255,255,255,0.1)',
+    strong: 'rgba(255,255,255,0.15)'
   },
-  {
-    id: '3',
-    title: 'Social Media Kampagne Q1',
-    type: 'social',
-    status: 'completed',
-    lastMessage: 'Briefing wurde erstellt und genehmigt.',
-    timestamp: new Date(Date.now() - 172800000),
+  text: {
+    primary: 'rgba(255,255,255,0.95)',
+    secondary: 'rgba(255,255,255,0.6)',
+    tertiary: 'rgba(255,255,255,0.4)',
+    disabled: 'rgba(255,255,255,0.25)'
+  },
+  accent: {
+    500: '#8B5CF6',
+    600: '#7C3AED',
+    gradient: 'linear-gradient(135deg, #8B5CF6, #3B82F6)'
   }
+};
+
+// Mock Projects
+const MOCK_PROJECTS: Project[] = [
+  { id: '1', title: 'TechStart Rebranding', type: 'logo', updatedAt: new Date(), unread: 2 },
+  { id: '2', title: 'Beratung GmbH CI', type: 'ci', updatedAt: new Date(Date.now() - 86400000) },
+  { id: '3', title: 'Social Q1 2026', type: 'social', updatedAt: new Date(Date.now() - 172800000) },
 ];
 
 // Welcome Message
 const WELCOME_MESSAGE: Message = {
   id: 'welcome',
   role: 'assistant',
-  content: `**Willkommen beim StadtHirsch KI-Briefing System**
+  content: `**Willkommen bei StadtHirsch**
 
-Ich bin dein strategischer Partner für kommunikative Spitzenergebnisse. Gemeinsam entwickeln wir ein fundiertes Briefing für dein Projekt – präzise, effizient und auf höchstem Niveau.
+Ich bin dein KI-Stratege für kommunikative Spitzenergebnisse. Gemeinsam entwickeln wir ein fundiertes Briefing – präzise, effizient und auf höchstem Niveau.
 
-**Womit kann ich dir heute helfen?**`,
+**Womit soll ich dir heute helfen?**`,
   timestamp: new Date()
 };
 
-// Animated Message Bubble
+// Modern Message Bubble
 function MessageBubble({ message, isLatest }: { message: Message; isLatest: boolean }) {
   const isUser = message.role === 'user';
   
   return (
-    <div className={`flex gap-4 animate-fade-up ${isUser ? 'flex-row-reverse' : ''}`}>
+    <div 
+      className="group flex gap-4 animate-fadeIn"
+      style={{ animation: 'fadeIn 0.3s ease-out' }}
+    >
       {/* Avatar */}
-      <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${
-        isUser 
-          ? 'bg-brand-600' 
-          : 'bg-gradient-to-br from-brand-500 to-brand-700'
-      }`}>
-        {isUser ? (
-          <User className="w-5 h-5 text-white" />
-        ) : (
-          <Bot className="w-5 h-5 text-white" />
-        )}
+      <div 
+        className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center"
+        style={{
+          background: isUser ? COLORS.accent.gradient : '#3B82F6',
+          boxShadow: '0 0 12px rgba(139, 92, 246, 0.3)'
+        }}
+      >
+        <span className="text-white text-xs font-semibold">
+          {isUser ? 'DU' : 'KI'}
+        </span>
       </div>
       
       {/* Content */}
-      <div className={`flex-1 max-w-[85%] ${isUser ? 'items-end' : 'items-start'}`}>
-        <div className={`
-          px-5 py-4 rounded-2xl text-sm leading-relaxed
-          ${isUser 
-            ? 'bg-brand-600 text-white rounded-br-md' 
-            : 'bg-dark-800/80 border border-dark-700/50 text-dark-100 rounded-bl-md backdrop-blur-sm'
-          }
-        `}>
-          <ReactMarkdown
-            components={{
-              p: ({ children }) => <p className="mb-3 last:mb-0">{children}</p>,
-              strong: ({ children }) => <strong className={`font-semibold ${isUser ? 'text-white' : 'text-white'}`}>{children}</strong>,
-              ul: ({ children }) => <ul className="list-disc pl-4 mb-3 space-y-1.5">{children}</ul>,
-              ol: ({ children }) => <ol className="list-decimal pl-4 mb-3 space-y-1.5">{children}</ol>,
-              li: ({ children }) => <li>{children}</li>,
-              h1: ({ children }) => <h1 className="text-lg font-bold mb-3 text-white">{children}</h1>,
-              h2: ({ children }) => <h2 className="text-base font-semibold mb-2 text-white">{children}</h2>,
-            }}
+      <div className="flex-1 min-w-0">
+        <div 
+          className="inline-block max-w-full px-5 py-4 rounded-2xl"
+          style={{
+            background: isUser ? COLORS.accent.gradient : COLORS.bg.surface,
+            border: `1px solid ${isUser ? 'transparent' : COLORS.border.default}`,
+            borderBottomLeftRadius: isUser ? '16px' : '4px',
+            borderBottomRightRadius: isUser ? '4px' : '16px'
+          }}
+        >
+          <div 
+            className="prose prose-sm max-w-none"
+            style={{ color: isUser ? 'white' : COLORS.text.primary }}
           >
-            {message.content}
-          </ReactMarkdown>
+            <ReactMarkdown
+              components={{
+                p: ({ children }) => <p style={{ marginBottom: '0.75rem' }}>{children}</p>,
+                strong: ({ children }) => <strong style={{ fontWeight: 600, color: isUser ? 'white' : 'inherit' }}>{children}</strong>,
+                ul: ({ children }) => <ul style={{ paddingLeft: '1.25rem', marginBottom: '0.75rem' }}>{children}</ul>,
+                li: ({ children }) => <li style={{ marginBottom: '0.25rem' }}>{children}</li>,
+                h1: ({ children }) => <h1 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '0.75rem' }}>{children}</h1>,
+              }}
+            >
+              {message.content}
+            </ReactMarkdown>
+          </div>
         </div>
-        <span className="text-[11px] text-dark-500 mt-1.5 block">
-          {message.role === 'user' ? 'Du' : 'StadtHirsch KI'} • {message.timestamp.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}
-        </span>
+        <div 
+          className="mt-1 text-xs"
+          style={{ color: COLORS.text.tertiary }}
+        >
+          {message.timestamp.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}
+        </div>
       </div>
     </div>
   );
@@ -121,14 +138,32 @@ function MessageBubble({ message, isLatest }: { message: Message; isLatest: bool
 function TypingIndicator() {
   return (
     <div className="flex gap-4">
-      <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center">
-        <Bot className="w-5 h-5 text-white" />
+      <div 
+        className="w-8 h-8 rounded-full flex items-center justify-center"
+        style={{ background: '#3B82F6' }}
+      >
+        <span className="text-white text-xs font-semibold">KI</span>
       </div>
-      <div className="bg-dark-800/50 border border-dark-700/30 px-5 py-4 rounded-2xl rounded-bl-md backdrop-blur-sm">
-        <div className="flex gap-1.5">
-          <span className="w-2 h-2 bg-dark-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-          <span className="w-2 h-2 bg-dark-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-          <span className="w-2 h-2 bg-dark-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+      <div 
+        className="px-5 py-4 rounded-2xl"
+        style={{ 
+          background: COLORS.bg.surface, 
+          border: `1px solid ${COLORS.border.default}`,
+          borderBottomLeftRadius: '4px'
+        }}
+      >
+        <div className="flex gap-1">
+          {[0, 1, 2].map((i) => (
+            <span 
+              key={i}
+              className="w-2 h-2 rounded-full"
+              style={{ 
+                background: COLORS.text.secondary,
+                animation: `bounce 1.4s infinite ease-in-out both`,
+                animationDelay: `${i * 0.16}s`
+              }}
+            />
+          ))}
         </div>
       </div>
     </div>
@@ -141,7 +176,8 @@ export default function ChatInterface() {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [activeProject, setActiveProject] = useState<string | null>(null);
+  const [activeProject, setActiveProject] = useState('1');
+  const [searchQuery, setSearchQuery] = useState('');
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -164,87 +200,195 @@ export default function ChatInterface() {
 
     // Simulate AI response
     setTimeout(() => {
-      const responses = [
-        `Ich verstehe. Lass uns das Thema "${input.slice(0, 30)}..." vertiefen.`,
-        `Das ist ein spannender Ansatz. Welche Zielgruppe adressierst du primär?`,
-        `Danke für diese Information. Sollen wir uns auf die visuelle Umsetzung oder die Strategie konzentrieren?`
-      ];
-      const randomResponse = responses[Math.floor(Math.random() * responses.length)];
-      
       setMessages(prev => [...prev, {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: randomResponse,
+        content: `Ich verstehe. Lass uns "${input.slice(0, 30)}${input.length > 30 ? '...' : ''}" vertiefen.\n\nWelche spezifischen Aspekte sind dir besonders wichtig?`,
         timestamp: new Date()
       }]);
       setIsLoading(false);
-    }, 1500);
+    }, 1200);
   };
 
   return (
-    <div className="flex h-screen bg-dark-950">
+    <div 
+      className="flex h-screen overflow-hidden"
+      style={{ background: COLORS.bg.base }}
+    >
+      {/* Global Styles */}
+      <style jsx global>{`
+        @keyframes fadeIn {
+          from { opacity: 0; transform: translateY(8px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes bounce {
+          0%, 80%, 100% { transform: scale(0.6); opacity: 0.5; }
+          40% { transform: scale(1); opacity: 1; }
+        }
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 0 20px rgba(139, 92, 246, 0.3); }
+            50% { box-shadow: 0 0 30px rgba(139, 92, 246, 0.5); }
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+          width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: ${COLORS.text.disabled};
+          border-radius: 3px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+          background: ${COLORS.text.tertiary};
+        }
+      `}</style>
+
       {/* Sidebar */}
-      <aside className={`fixed inset-y-0 left-0 z-50 w-72 bg-dark-900 border-r border-dark-800 transform transition-transform duration-300 ease-premium lg:relative lg:translate-x-0 ${
-        sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-      }`}>
+      <aside 
+        className="fixed inset-y-0 left-0 z-50 w-64 flex flex-col border-r transition-transform duration-300 ease-out lg:relative lg:translate-x-0"
+        style={{ 
+          background: COLORS.bg.elevated,
+          borderColor: COLORS.border.subtle,
+          transform: sidebarOpen ? 'translateX(0)' : 'translateX(-100%)'
+        }}
+      >
         {/* Logo */}
-        <div className="h-16 flex items-center gap-3 px-5 border-b border-dark-800">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center shadow-glow-sm">
+        <div 
+          className="flex items-center gap-3 px-5 py-4 border-b"
+          style={{ borderColor: COLORS.border.subtle }}
+        >
+          <div 
+            className="w-9 h-9 rounded-xl flex items-center justify-center"
+            style={{ 
+              background: COLORS.accent.gradient,
+              boxShadow: '0 0 16px rgba(139, 92, 246, 0.4)'
+            }}
+          >
             <Sparkles className="w-5 h-5 text-white" />
           </div>
           <div>
-            <h1 className="font-semibold text-dark-50 text-sm">StadtHirsch</h1>
-            <p className="text-[11px] text-dark-500">KI-Briefing System</p>
+            <h1 className="font-semibold text-sm" style={{ color: COLORS.text.primary }}>StadtHirsch</h1>
+            <p className="text-[11px]" style={{ color: COLORS.text.tertiary }}>KI-Briefing v4.0</p>
           </div>
         </div>
 
-        {/* New Briefing */}
+        {/* New Briefing Button */}
         <div className="p-4">
-          <button className="w-full flex items-center gap-3 px-4 py-3 bg-brand-600 hover:bg-brand-500 text-white rounded-lg font-medium text-sm shadow-glow-sm hover:shadow-glow transition-all duration-200 active:scale-[0.98]">
+          <button 
+            className="w-full flex items-center gap-2.5 px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200"
+            style={{ 
+              background: COLORS.accent.gradient,
+              color: 'white',
+              boxShadow: '0 0 20px rgba(139, 92, 246, 0.3)'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = 'translateY(-1px)';
+              e.currentTarget.style.boxShadow = '0 4px 24px rgba(139, 92, 246, 0.4)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'translateY(0)';
+              e.currentTarget.style.boxShadow = '0 0 20px rgba(139, 92, 246, 0.3)';
+            }}
+          >
             <Plus className="w-4 h-4" />
-            <span>Neues Briefing</span>
+            Neues Briefing
           </button>
         </div>
 
         {/* Search */}
         <div className="px-4 pb-3">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-dark-500" />
+          <div 
+            className="flex items-center gap-2 px-3 py-2 rounded-lg border transition-all"
+            style={{ 
+              background: COLORS.bg.base,
+              borderColor: COLORS.border.subtle
+            }}
+          >
+            <Search className="w-4 h-4" style={{ color: COLORS.text.tertiary }} />
             <input 
               type="text"
               placeholder="Suchen..."
-              className="w-full bg-dark-800/50 border border-dark-700/50 rounded-lg pl-9 pr-3 py-2 text-sm text-dark-200 placeholder:text-dark-500 focus:outline-none focus:border-brand-500/50 focus:ring-1 focus:ring-brand-500/30 transition-all"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="flex-1 bg-transparent outline-none text-sm"
+              style={{ color: COLORS.text.secondary }}
             />
+            <kbd 
+              className="px-1.5 py-0.5 text-[10px] rounded border"
+              style={{ 
+                background: COLORS.bg.hover,
+                borderColor: COLORS.border.subtle,
+                color: COLORS.text.tertiary
+              }}
+            >
+              ⌘K
+            </kbd>
           </div>
         </div>
 
-        {/* Project List */}
-        <div className="flex-1 overflow-y-auto px-3">
-          <div className="text-[11px] font-semibold text-dark-500 uppercase tracking-wider px-3 py-2">
+        {/* Projects */}
+        <div className="flex-1 overflow-y-auto custom-scrollbar px-3">
+          <div 
+            className="text-[11px] font-semibold uppercase tracking-wider px-3 py-2"
+            style={{ color: COLORS.text.tertiary }}
+          >
             Aktive Briefings
           </div>
           <div className="space-y-1">
-            {MOCK_PROJECTS.map((project, i) => (
+            {MOCK_PROJECTS.map((project) => (
               <button
                 key={project.id}
                 onClick={() => setActiveProject(project.id)}
-                className={`w-full flex items-start gap-3 px-3 py-2.5 rounded-lg text-left transition-all duration-150 ${
-                  activeProject === project.id 
-                    ? 'bg-brand-500/10 border border-brand-500/20' 
-                    : 'hover:bg-dark-800/50 border border-transparent'
-                }`}
+                className="w-full text-left px-3 py-2.5 rounded-lg transition-all duration-150"
+                style={{
+                  background: activeProject === project.id ? COLORS.bg.hover : 'transparent',
+                  border: activeProject === project.id ? `1px solid ${COLORS.border.default}` : '1px solid transparent'
+                }}
+                onMouseEnter={(e) => {
+                  if (activeProject !== project.id) {
+                    e.currentTarget.style.background = COLORS.bg.base;
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (activeProject !== project.id) {
+                    e.currentTarget.style.background = 'transparent';
+                  }
+                }}
               >
-                <div className="w-2 h-2 rounded-full bg-brand-500 mt-2 flex-shrink-0" />
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium text-dark-200 text-sm truncate">{project.title}</span>
-                    {project.unread && (
-                      <span className="w-5 h-5 bg-brand-600 text-white text-[10px] font-semibold rounded-full flex items-center justify-center">
-                        {project.unread}
+                <div className="flex items-start gap-3">
+                  <div 
+                    className="w-2 h-2 rounded-full mt-1.5 flex-shrink-0"
+                    style={{ 
+                      background: project.type === 'logo' ? '#8B5CF6' : 
+                                project.type === 'ci' ? '#3B82F6' : 
+                                project.type === 'social' ? '#10B981' : '#6B7280'
+                    }}
+                  />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span 
+                        className="text-sm font-medium truncate"
+                        style={{ color: COLORS.text.primary }}
+                      >
+                        {project.title}
                       </span>
-                    )}
+                      {project.unread && (
+                        <span 
+                          className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-semibold"
+                          style={{ background: COLORS.accent[500], color: 'white' }}
+                        >
+                          {project.unread}
+                        </span>
+                      )}
+                    </div>
+                    <p 
+                      className="text-xs truncate mt-0.5"
+                      style={{ color: COLORS.text.tertiary }}
+                    >
+                      {project.updatedAt.toLocaleDateString('de-DE')}
+                    </p>
                   </div>
-                  <p className="text-[12px] text-dark-500 truncate mt-0.5">{project.lastMessage}</p>
                 </div>
               </button>
             ))}
@@ -252,58 +396,105 @@ export default function ChatInterface() {
         </div>
 
         {/* Bottom */}
-        <div className="p-4 border-t border-dark-800">
-          <div className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-dark-800/50 cursor-pointer transition-colors">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-dark-700 to-dark-600 flex items-center justify-center">
-              <span className="text-sm font-semibold text-dark-300">LH</span>
+        <div 
+          className="p-3 border-t"
+          style={{ borderColor: COLORS.border.subtle }}
+        >
+          <button 
+            className="w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors"
+            style={{
+              background: 'transparent'
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.background = COLORS.bg.base}
+            onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+          >
+            <div 
+              className="w-8 h-8 rounded-lg flex items-center justify-center text-sm font-semibold"
+              style={{ background: COLORS.bg.active, color: COLORS.text.secondary }}
+            >
+              LH
             </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-dark-200">Lukas Hirsch</p>
-              <p className="text-[11px] text-dark-500">CEO • StadtHirsch</p>
+            <div className="flex-1 text-left">
+              <p className="text-sm font-medium" style={{ color: COLORS.text.primary }}>Lukas Hirsch</p>
+              <p className="text-[11px]" style={{ color: COLORS.text.tertiary }}>CEO</p>
             </div>
-            <Settings className="w-4 h-4 text-dark-500" />
-          </div>
+            <Settings className="w-4 h-4" style={{ color: COLORS.text.tertiary }} />
+          </button>
         </div>
       </aside>
 
       {/* Overlay */}
       {sidebarOpen && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 lg:hidden" onClick={() => setSidebarOpen(false)} />
+        <div 
+          className="fixed inset-0 z-40 lg:hidden"
+          style={{ background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(4px)' }}
+          onClick={() => setSidebarOpen(false)}
+        />
       )}
 
       {/* Main */}
       <main className="flex-1 flex flex-col min-w-0">
         {/* Header */}
-        <header className="h-16 flex items-center justify-between px-5 border-b border-dark-800 bg-dark-950/80 backdrop-blur-xl">
+        <header 
+          className="flex items-center justify-between px-5 py-3.5 border-b"
+          style={{ 
+            background: 'rgba(10,10,10,0.8)',
+            borderColor: COLORS.border.subtle,
+            backdropFilter: 'blur(12px)'
+          }}
+        >
           <div className="flex items-center gap-4">
             <button 
-              onClick={() => setSidebarOpen(true)} 
-              className="lg:hidden p-2 -ml-2 hover:bg-dark-800/50 rounded-lg transition-colors"
+              onClick={() => setSidebarOpen(true)}
+              className="lg:hidden p-2 -ml-2 rounded-lg transition-colors"
+              style={{ color: COLORS.text.secondary }}
+              onMouseEnter={(e) => e.currentTarget.style.background = COLORS.bg.surface}
+              onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
             >
-              <Menu className="w-5 h-5 text-dark-400" />
+              <Menu className="w-5 h-5" />
             </button>
             
             <div className="flex items-center gap-2">
-              <MessageSquare className="w-4 h-4 text-dark-500" />
-              <span className="text-sm font-medium text-dark-200">Neues Briefing</span>
+              <span style={{ color: COLORS.text.tertiary }}>/</span>
+              <span className="text-sm font-medium" style={{ color: COLORS.text.primary }}>
+                {MOCK_PROJECTS.find(p => p.id === activeProject)?.title || 'Neues Briefing'}
+              </span>
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
-            <button className="flex items-center gap-2 px-4 py-2 bg-dark-800 hover:bg-dark-700 border border-dark-700 text-dark-200 rounded-lg text-sm font-medium transition-all active:scale-[0.98]">
+          <div className="flex items-center gap-2">
+            <button 
+              className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all"
+              style={{ 
+                background: COLORS.bg.surface,
+                border: `1px solid ${COLORS.border.default}`,
+                color: COLORS.text.secondary
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = COLORS.bg.hover;
+                e.currentTarget.style.borderColor = COLORS.border.strong;
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = COLORS.bg.surface;
+                e.currentTarget.style.borderColor = COLORS.border.default;
+              }}
+            >
               <FileText className="w-4 h-4" />
-              <span>Exportieren</span>
+              <span className="hidden sm:inline">Export PDF</span>
             </button>
           </div>
         </header>
 
         {/* Chat */}
-        <div className="flex-1 overflow-y-auto bg-dark-950">
-          <div className="max-w-3xl mx-auto py-8 px-6 space-y-8">
+        <div 
+          className="flex-1 overflow-y-auto custom-scrollbar p-5"
+          style={{ background: COLORS.bg.base }}
+        >
+          <div className="max-w-3xl mx-auto space-y-6">
             {messages.map((message, index) => (
               <MessageBubble 
-                key={message.id} 
-                message={message} 
+                key={message.id}
+                message={message}
                 isLatest={index === messages.length - 1}
               />
             ))}
@@ -314,31 +505,85 @@ export default function ChatInterface() {
         </div>
 
         {/* Input */}
-        <div className="p-5 bg-dark-950 border-t border-dark-800">
+        <div 
+          className="p-5 border-t"
+          style={{ 
+            background: COLORS.bg.elevated,
+            borderColor: COLORS.border.subtle
+          }}
+        >
           <div className="max-w-3xl mx-auto">
-            <div className="relative flex items-end gap-3 bg-dark-800/50 border border-dark-700/50 rounded-2xl p-2 focus-within:border-brand-500/50 focus-within:ring-2 focus-within:ring-brand-500/20 transition-all">
+            <div 
+              className="relative flex items-end gap-3 rounded-2xl border p-3 transition-all"
+              style={{ 
+                background: COLORS.bg.surface,
+                borderColor: COLORS.border.default
+              }}
+              onFocus={(e) => e.currentTarget.style.borderColor = COLORS.accent[500]}
+              onBlur={(e) => e.currentTarget.style.borderColor = COLORS.border.default}
+            >
+              <button 
+                className="p-2 rounded-lg transition-colors flex-shrink-0"
+                style={{ color: COLORS.text.tertiary }}
+                onMouseEnter={(e) => e.currentTarget.style.background = COLORS.bg.hover}
+                onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+              >
+                <Paperclip className="w-5 h-5" />
+              </button>
+              
               <textarea
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), sendMessage())}
                 placeholder="Beschreibe dein Projekt..."
                 rows={1}
-                className="flex-1 bg-transparent px-4 py-3 resize-none outline-none min-h-[44px] max-h-[160px] text-sm text-dark-100 placeholder:text-dark-600"
+                className="flex-1 bg-transparent resize-none outline-none min-h-[44px] max-h-[140px] py-2.5 text-sm"
+                style={{ color: COLORS.text.primary }}
               />
-              <button
-                onClick={sendMessage}
-                disabled={isLoading || !input.trim()}
-                className="p-2.5 bg-brand-600 hover:bg-brand-500 disabled:opacity-40 disabled:cursor-not-allowed text-white rounded-xl shadow-lg shadow-brand-500/25 transition-all duration-200 active:scale-[0.96]"
-              >
-                {isLoading ? (
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                ) : (
-                  <Send className="w-5 h-5" />
-                )}
-              </button>
+              
+              <div className="flex items-center gap-2">
+                <button 
+                  className="p-2 rounded-lg transition-colors"
+                  style={{ color: COLORS.text.tertiary }}
+                  onMouseEnter={(e) => e.currentTarget.style.background = COLORS.bg.hover}
+                  onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                >
+                  <Mic className="w-5 h-5" />
+                </button>
+                
+                <button
+                  onClick={sendMessage}
+                  disabled={isLoading || !input.trim()}
+                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium text-sm transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                  style={{ 
+                    background: COLORS.accent.gradient,
+                    color: 'white',
+                    boxShadow: input.trim() ? '0 0 20px rgba(139, 92, 246, 0.4)' : 'none'
+                  }}
+                  onMouseEnter={(e) => {
+                    if (input.trim()) {
+                      e.currentTarget.style.transform = 'translateY(-1px)';
+                      e.currentTarget.style.boxShadow = '0 4px 24px rgba(139, 92, 246, 0.5)';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = 'translateY(0)';
+                    e.currentTarget.style.boxShadow = input.trim() ? '0 0 20px rgba(139, 92, 246, 0.4)' : 'none';
+                  }}
+                >
+                  {isLoading ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Send className="w-4 h-4" />
+                  )}
+                </button>
+              </div>
             </div>
-            <p className="text-center text-[11px] text-dark-600 mt-3">
-              KI kann Fehler machen. Wichtige Informationen bitte überprüfen. • v3.0 Premium
+            <p 
+              className="text-center text-xs mt-3"
+              style={{ color: COLORS.text.tertiary }}
+            >
+              Drücke Enter zum Senden • Shift+Enter für neue Zeile
             </p>
           </div>
         </div>
