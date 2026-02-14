@@ -606,3 +606,272 @@ body {
     display: none;
   }
 }
+
+/* ============================================
+   MOBILE OPTIMIZATION
+   ============================================ */
+
+/* Tablet & smaller (≤1024px) */
+@media (max-width: 1024px) {
+  /* Sidebar becomes fixed overlay */
+  .sidebar {
+    position: fixed !important;
+    left: 0;
+    top: 0;
+    z-index: 100;
+    transform: translateX(-100%);
+    box-shadow: 4px 0 24px rgba(0, 0, 0, 0.5);
+  }
+  
+  .sidebar.is-open {
+    transform: translateX(0);
+  }
+  
+  /* Larger mobile menu button */
+  .chat__menu-btn {
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  /* Smaller header padding */
+  .chat__header {
+    padding: 0 var(--space-4);
+  }
+}
+
+/* Phone portrait (≤768px) */
+@media (max-width: 768px) {
+  /* Larger base font for readability */
+  html {
+    font-size: 16px;
+  }
+  
+  /* Sidebar full width on small phones */
+  .sidebar {
+    width: 85%;
+    max-width: 320px;
+  }
+  
+  /* Reduce header height */
+  .chat__header {
+    height: 56px;
+    padding: 0 var(--space-4);
+  }
+  
+  .chat__project-name {
+    font-size: 15px;
+  }
+  
+  /* Hide export button on small screens */
+  .chat__actions .btn--secondary span {
+    display: none;
+  }
+  
+  .chat__actions .btn--secondary {
+    padding: 10px;
+  }
+  
+  /* Message bubbles full width on mobile */
+  .chat__messages {
+    padding: var(--space-4);
+  }
+  
+  .messages {
+    gap: var(--space-4);
+  }
+  
+  .message {
+    gap: var(--space-3);
+  }
+  
+  .message__content {
+    max-width: calc(100% - 48px);
+  }
+  
+  .message__bubble {
+    padding: var(--space-3) var(--space-4);
+    font-size: 15px;
+    border-radius: 18px;
+  }
+  
+  .message__bubble--assistant {
+    border-bottom-left-radius: 4px;
+  }
+  
+  .message__bubble--user {
+    border-bottom-right-radius: 4px;
+  }
+  
+  /* Larger avatars for touch */
+  .message__avatar {
+    width: 36px;
+    height: 36px;
+    font-size: 11px;
+  }
+  
+  /* Input optimization */
+  .chat__input {
+    padding: var(--space-3);
+    padding-bottom: calc(var(--space-3) + env(safe-area-inset-bottom, 0px));
+  }
+  
+  .input__container {
+    padding: var(--space-2) var(--space-3);
+    border-radius: 20px;
+  }
+  
+  .input__field {
+    font-size: 16px; /* Prevents zoom on iOS */
+    min-height: 44px;
+    max-height: 100px;
+  }
+  
+  /* Larger touch targets */
+  .btn--icon {
+    width: 44px;
+    height: 44px;
+  }
+  
+  .btn--send {
+    width: 44px;
+    height: 44px;
+  }
+  
+  /* Adjust sidebar header */
+  .sidebar__header {
+    padding: var(--space-4);
+    min-height: 56px;
+  }
+  
+  /* Larger project items */
+  .project-list__button {
+    padding: var(--space-3) var(--space-4);
+    min-height: 56px;
+  }
+  
+  .project-list__title {
+    font-size: 15px;
+  }
+  
+  .project-list__date {
+    font-size: 12px;
+  }
+  
+  /* Hide hint on very small screens */
+  .input__hint {
+    display: none;
+  }
+}
+
+/* Very small phones (≤375px) */
+@media (max-width: 375px) {
+  .sidebar {
+    width: 100%;
+  }
+  
+  .message__bubble {
+    font-size: 14px;
+  }
+  
+  .chat__header {
+    padding: 0 var(--space-3);
+  }
+  
+  .chat__messages {
+    padding: var(--space-3);
+  }
+}
+
+/* Landscape phones - ensure input is visible */
+@media (max-height: 500px) and (orientation: landscape) {
+  .chat__header {
+    height: 48px;
+  }
+  
+  .sidebar__header {
+    min-height: 48px;
+  }
+}
+
+/* Touch device optimizations */
+@media (hover: none) and (pointer: coarse) {
+  /* Remove hover effects on touch */
+  .btn--icon:hover,
+  .project-list__button:hover {
+    background: transparent;
+  }
+  
+  .btn--icon:active,
+  .project-list__button:active {
+    background: var(--color-bg-hover);
+  }
+  
+  /* Larger touch targets */
+  .btn {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  /* Smooth scrolling */
+  .chat__messages {
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* Safe area for notched devices */
+@supports (padding-top: env(safe-area-inset-top)) {
+  .chat__header {
+    padding-top: env(safe-area-inset-top);
+  }
+  
+  .sidebar {
+    padding-top: env(safe-area-inset-top);
+  }
+}
+
+/* Reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  .message {
+    animation: none;
+  }
+  
+  .typing__dot {
+    animation: none;
+    opacity: 1;
+  }
+  
+  .sidebar,
+  .mobile-overlay {
+    transition: none;
+  }
+}
+
+/* Dark mode preference (already dark, but ensure consistency) */
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+  }
+}
+
+/* Print styles */
+@media print {
+  .sidebar,
+  .chat__input,
+  .mobile-overlay {
+    display: none !important;
+  }
+  
+  .chat {
+    background: white;
+    color: black;
+  }
+  
+  .message__bubble {
+    border: 1px solid #ccc;
+    background: white !important;
+    color: black !important;
+  }
+}
