@@ -7,7 +7,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { AgentDashboard } from './components/AgentDashboard';
 import { ProjectWorkspace } from './components/ProjectWorkspace';
 import { LiveChat } from './components/LiveChat';
@@ -17,6 +17,12 @@ import './styles/agency.css';
 export default function AgencyPage() {
   const [activeView, setActiveView] = useState<'dashboard' | 'project' | 'chat'>('dashboard');
   const { agents, projects, activeProject, createProject } = useAgentSystem();
+
+  const handleBriefingComplete = (briefing: Record<string, any>) => {
+    createProject(briefing);
+    // Switch to project view after briefing
+    setTimeout(() => setActiveView('project'), 1500);
+  };
 
   return (
     <div className="agency">
@@ -58,11 +64,11 @@ export default function AgencyPage() {
         {activeView === 'dashboard' && (
           <AgentDashboard agents={agents} projects={projects} />
         )}
-        {activeView === 'project' && (
+        {activeView === 'project' && activeProject && (
           <ProjectWorkspace project={activeProject} />
         )}
         {activeView === 'chat' && (
-          <LiveChat onBriefingComplete={(briefing) => createProject(briefing)} />
+          <LiveChat onBriefingComplete={handleBriefingComplete} />
         )}
       </main>
     </div>

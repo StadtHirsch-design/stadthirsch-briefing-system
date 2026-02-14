@@ -1,196 +1,156 @@
+/**
+ * API Route: /api/chat
+ * Echte KI-Integration mit Google Gemini
+ */
+
 import { NextRequest, NextResponse } from 'next/server';
-import { supabaseAdmin } from '@/lib/supabase';
-import { queryAI } from '@/lib/openclaw';
-import { detectCase, CASE_CONFIGS } from '@/lib/cases';
-import { BriefingCase } from '@/types';
+
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
+
+interface ChatMessage {
+  role: 'user' | 'agent';
+  content: string;
+}
+
+interface BriefingContext {
+  projectType?: string;
+  industry?: string;
+  targetAudience?: string;
+  style?: string;
+  colors?: string[];
+  timeline?: string;
+  budget?: string;
+  [key: string]: any;
+}
 
 export async function POST(request: NextRequest) {
   try {
-    const { projectId, message } = await request.json();
+    const { messages, briefing, missingFields, confidence } = await request.json();
 
-    if (!projectId || !message) {
+    if (!GEMINI_API_KEY) {
+      console.error('GEMINI_API_KEY not configured');
       return NextResponse.json(
-        { error: 'Project ID and message required' },
-        { status: 400 }
+        { error: 'KI nicht konfiguriert' },
+        { status: 500 }
       );
     }
 
-    console.log(`[Chat API] New message for project ${projectId}: "${message.substring(0, 50)}..."`);
+    // Build conversation history for Gemini
+    const conversationHistory = messages.map((msg: ChatMessage) => ({
+      role: msg.role === 'user' ? 'user' : 'model',
+      parts: [{ text: msg.content }]
+    }));
 
-    // 1. Kompletten Gesprächsverlauf aus Supabase laden (letzte 20 Nachrichten)
-    const { data: conversationHistory, error: historyError } = await supabaseAdmin
-      .from('conversations')
-      .select('*')
-      .eq('project_id', projectId)
-      .order('created_at', { ascending: true })
-      .limit(20);
+    // Build briefing context string
+    const briefingContext = Object.entries(briefing || {})
+      .filter(([_, value]) => value !== undefined && value !== null && value !== '')
+      .map(([key, value]) => {
+        if (Array.isArray(value)) {
+          return `${key}: ${value.join(', ')}`;
+        }
+        return `${key}: ${value}`;
+      })
+      .join('\n') || 'Noch keine Informationen erfasst';
 
-    if (historyError) {
-      console.error('[Chat API] Error loading history:', historyError);
-    }
+    // Build system prompt with context
+    const systemPrompt = `Du bist ein erfahrener KI-Stratege bei der StadtHirsch KI-Agentur, einer vollautomatisierten Werbe- und Grafikagentur.
 
-    // 2. Benutzernachricht speichern
-    await supabaseAdmin.from('conversations').insert({
-      project_id: projectId,
-      message,
-      role: 'user'
+DEINE AUFGABE:
+Führe ein professionelles Briefing-Gespräch mit dem Kunden. Sammle alle notwendigen Informationen für die 4 Agenten (Research, Creative, Production, Delivery).
+
+WICHTIGE REGELN:
+1. ERINNERE DICH an ALLE vorherigen Nachrichten im Gespräch
+2. Stelle GEZIELTE Nachfragen basierend auf fehlenden Informationen
+3. Extrahiere automatisch: Branche, Zielgruppe, Stil, Farben, Zeitrahmen
+4. Bei Confidence > 80%: Bestätige Briefing und kündige Agenten-Start an
+5. Sei professionell, freundlich und präzise
+
+KONTEXT:
+- Bisher erfasst: ${briefingContext}
+- Fehlend: ${missingFields?.join(', ') || 'nichts'}
+- Vollständigkeit: ${Math.round((confidence || 0) * 100)}%
+
+Wenn das Briefing vollständig ist (Confidence > 80%), sage:
+"✅ Briefing vollständig! Ich starte jetzt die Agenten..."`;
+
+    // Call Gemini API
+    const response = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        contents: [
+          {
+            role: 'user',
+            parts: [{ text: systemPrompt }]
+          },
+          ...conversationHistory
+        ],
+        generationConfig: {
+          temperature: 0.7,
+          maxOutputTokens: 1024,
+        },
+        safetySettings: [
+          {
+            category: 'HARM_CATEGORY_HARASSMENT',
+            threshold: 'BLOCK_MEDIUM_AND_ABOVE'
+          },
+          {
+            category: 'HARM_CATEGORY_HATE_SPEECH',
+            threshold: 'BLOCK_MEDIUM_AND_ABOVE'
+          }
+        ]
+      })
     });
 
-    // 3. Case erkennen (nur beim ersten Mal oder wenn noch nicht klar)
-    const currentProject = await supabaseAdmin
-      .from('projects')
-      .select('project_type')
-      .eq('id', projectId)
-      .single();
+    if (!response.ok) {
+      const errorData = await response.text();
+      console.error('Gemini API error:', errorData);
+      return NextResponse.json(
+        { error: 'KI-Fehler', details: errorData },
+        { status: 500 }
+      );
+    }
+
+    const data = await response.json();
     
-    let detectedCase = currentProject.data?.project_type;
-    if (!detectedCase) {
-      detectedCase = detectCase(message);
-      console.log(`[Chat API] Detected case: ${detectedCase}`);
-      
-      if (detectedCase) {
-        await supabaseAdmin
-          .from('projects')
-          .update({ project_type: detectedCase })
-          .eq('id', projectId);
-      }
+    if (!data.candidates || data.candidates.length === 0) {
+      console.error('No candidates in response:', data);
+      return NextResponse.json(
+        { error: 'Keine KI-Antwort' },
+        { status: 500 }
+      );
     }
 
-    // 4. Build conversation context for AI
-    const caseConfig = detectedCase && detectedCase in CASE_CONFIGS ? CASE_CONFIGS[detectedCase as BriefingCase] : null;
-    const conversationCount = conversationHistory?.length || 0;
-    
-    // Format conversation history for AI context
-    const formattedHistory = conversationHistory?.map((msg: any) => ({
-      role: msg.role,
-      content: msg.message
-    })) || [];
+    const aiResponse = data.candidates[0].content.parts[0].text;
 
-    // Add current message to history
-    formattedHistory.push({ role: 'user', content: message });
-
-    // System prompt with full context awareness
-    const systemPrompt = `Du bist ein erfahrener Strategie-Berater für die Werbeagentur StadtHirsch, spezialisiert auf die Mario Pricken Methodik.
-
-${caseConfig ? `
-ERKANNTER CASE: ${caseConfig.name}
-Beschreibung: ${caseConfig.description}
-
-WICHTIGE FRAGEN FÜR DIESEN CASE:
-${caseConfig.initial_questions.join('\n')}
-
-DOKUMENT-TEMPLATE: ${caseConfig.document_template}
-` : ''}
-
-REGELN FÜR DAS GESPRÄCH:
-1. LIES Den gesamten bisherigen Gesprächsverlauf SORGFÄLTIG durch
-2. Reagiere auf ALLE vorherigen Antworten des Kunden
-3. Stelle logische Folgefragen basierend auf dem bisher Gesagten
-4. Vermeide Wiederholungen von Fragen, die schon beantwortet wurden
-5. Nutze das "Clicking"-Prinzip: Vertiefe eine Frage, bevor du zur nächsten gehst
-6. Zeige Empathie und fühle dich in die Situation des Kunden ein
-7. Nachdem du 5-8 wichtige Informationen gesammelt hast, frage: "Ich habe jetzt genug Informationen. Soll ich das strategische Briefing erstellen?"
-
-KOMMUNIKATIONSSTIL:
-- Professionell, aber warm und empathisch
-- Keine Fachbegriffe ohne Erklärung
-- Stelle maximal EINE Frage auf einmal
-- Summarisiere regelmäßig das bisher Gesagte, um zu zeigen, dass du zuhörst
-
-Dies ist Nachricht ${conversationCount + 1} im Gespräch.`;
-
-    console.log(`[Chat API] Sending ${formattedHistory.length} messages to AI`);
-
-    // 5. KI-Antwort generieren mit vollständigem Kontext
-    const aiResponse = await queryAIWithHistory(formattedHistory, systemPrompt);
-
-    // 6. KI-Antwort speichern
-    const { data: conversationData, error: dbError } = await supabaseAdmin
-      .from('conversations')
-      .insert({
-        project_id: projectId,
-        message: aiResponse,
-        role: 'assistant',
-        metadata: { 
-          case_detected: detectedCase,
-          conversation_turn: conversationCount + 1
-        }
-      })
-      .select()
-      .single();
-
-    if (dbError) {
-      console.error('[Chat API] Database error:', dbError);
-    }
-
-    // 7. Prüfen ob Briefing komplett ist
-    const isComplete = aiResponse.toLowerCase().includes('soll ich das strategische brief') ||
-                      aiResponse.toLowerCase().includes('briefing erstellen') ||
-                      aiResponse.toLowerCase().includes('genug informationen');
-
-    if (isComplete) {
-      await supabaseAdmin
-        .from('projects')
-        .update({ status: 'document' })
-        .eq('id', projectId);
-    }
+    // Check if briefing is complete based on AI response
+    const isBriefingComplete = aiResponse.includes('✅ Briefing vollständig') || 
+                               aiResponse.includes('Agenten starten') ||
+                               confidence >= 0.8;
 
     return NextResponse.json({
       response: aiResponse,
-      conversationId: conversationData?.id,
-      caseDetected: detectedCase,
-      isComplete,
-      conversationTurn: conversationCount + 1
+      isBriefingComplete,
+      confidence,
+      missingFields
     });
 
   } catch (error) {
-    console.error('[Chat API] Fatal error:', error);
+    console.error('Chat API error:', error);
     return NextResponse.json(
-      { error: 'Internal server error', details: error instanceof Error ? error.message : 'Unknown error' },
+      { error: 'Server-Fehler', message: (error as Error).message },
       { status: 500 }
     );
   }
 }
 
-// New function to handle conversation history
-async function queryAIWithHistory(history: Array<{role: string, content: string}>, systemPrompt: string): Promise<string> {
-  // Format messages for OpenRouter
-  const messages = [
-    { role: 'system', content: systemPrompt },
-    ...history.map(msg => ({
-      role: msg.role as 'user' | 'assistant',
-      content: msg.content
-    }))
-  ];
-
-  try {
-    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
-        'HTTP-Referer': 'https://stadthirsch-briefing-system.vercel.app',
-        'X-Title': 'StadtHirsch KI-Briefing'
-      },
-      body: JSON.stringify({
-        model: 'openai/gpt-4o-mini',
-        messages,
-        temperature: 0.8,
-        max_tokens: 1500
-      })
-    });
-
-    if (!response.ok) {
-      throw new Error(`OpenRouter error: ${response.status}`);
-    }
-
-    const data = await response.json();
-    return data.choices?.[0]?.message?.content || 'Keine Antwort';
-  } catch (error) {
-    console.error('[queryAIWithHistory] Error:', error);
-    
-    // Fallback to simple queryAI
-    const { queryAI } = await import('@/lib/openclaw');
-    return await queryAI(history[history.length - 1]?.content || '', systemPrompt);
-  }
+// Health check endpoint
+export async function GET() {
+  return NextResponse.json({
+    status: 'ok',
+    geminiConfigured: !!GEMINI_API_KEY
+  });
 }

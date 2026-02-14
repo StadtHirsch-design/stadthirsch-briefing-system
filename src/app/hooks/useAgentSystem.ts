@@ -102,15 +102,27 @@ export function useAgentSystem() {
     return () => clearInterval(interval);
   }, []);
 
-  const createProject = useCallback((briefing?: string) => {
+  const createProject = useCallback((briefing?: string | Record<string, any>) => {
+    const briefingText = typeof briefing === 'string' 
+      ? briefing 
+      : briefing ? JSON.stringify(briefing, null, 2) : undefined;
+    
+    const projectName = typeof briefing === 'string' 
+      ? briefing.slice(0, 30)
+      : briefing?.projectType 
+        ? `${briefing.projectType} Projekt`
+        : 'Neues Projekt';
+    
     const newProject: Project = {
       id: Date.now().toString(),
-      name: briefing ? `Projekt: ${briefing.slice(0, 30)}...` : 'Neues Projekt',
-      client: 'Neuer Kunde',
+      name: `Projekt: ${projectName}`,
+      client: typeof briefing === 'object' && briefing?.industry 
+        ? briefing.industry 
+        : 'Neuer Kunde',
       type: 'branding',
       status: 'research',
       createdAt: new Date(),
-      briefing
+      briefing: briefingText
     };
     
     setProjects(prev => [newProject, ...prev]);
